@@ -29,7 +29,11 @@ fn invoice_full_lifecycle_passes() {
     // Standard invoice: all states reachable; all non-terminal have a path to
     // Settled or Void.
     let m = model_instruments(vec![invoice()]);
-    assert!(check_model(&m).is_ok(), "{:?}", check_model(&m).unwrap_err());
+    assert!(
+        check_model(&m).is_ok(),
+        "{:?}",
+        check_model(&m).unwrap_err()
+    );
 }
 
 #[test]
@@ -144,8 +148,8 @@ fn cycle_with_no_exit_is_non_terminating() {
             transition(Draft, Issued),
             transition(Issued, PartiallyPaid),
             transition(PartiallyPaid, Issued), // cycle back — no exit
-            // Settled is declared but unreachable; Issued + PartiallyPaid
-            // are both non-terminating.
+                                               // Settled is declared but unreachable; Issued + PartiallyPaid
+                                               // are both non-terminating.
         ],
     );
     let m = model_instruments(vec![inst]);
@@ -156,7 +160,9 @@ fn cycle_with_no_exit_is_non_terminating() {
     // We don't prescribe the exact error count, but at least one
     // NonTerminatingState must be present.
     assert!(
-        errors.iter().any(|e| matches!(e, CheckError::NonTerminatingState { .. })),
+        errors
+            .iter()
+            .any(|e| matches!(e, CheckError::NonTerminatingState { .. })),
         "expected at least one NonTerminatingState error, got: {errors:?}"
     );
 }
@@ -177,7 +183,9 @@ fn non_terminating_draft_with_no_transitions() {
         panic!("expected Err, got Ok");
     };
     assert!(
-        errors.iter().any(|e| matches!(e, CheckError::NonTerminatingState { .. })),
+        errors
+            .iter()
+            .any(|e| matches!(e, CheckError::NonTerminatingState { .. })),
         "Draft with no transitions should be non-terminating: {errors:?}"
     );
 }

@@ -16,5 +16,4 @@ oikos-syntax.workspace = true
 logos.workspace        = true
 chumsky.workspace      = true
 thiserror.workspace    = true
-ariadne.workspace      = true
 smol_str.workspace     = true

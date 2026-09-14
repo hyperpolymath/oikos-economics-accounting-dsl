@@ -109,7 +109,7 @@ to find out.
   are NOT a stub — `check_model` is real and its Godley / instrument / currency /
   cross-ref paths pass **29 tests**. What is genuinely blocked is the
   *desugar-to-Ephapax* lowering and any check that consumes the desugared IR.
-* *`.machine_readable/6a2/STATE.a2ml`* — reports `version 0.1.0-dev`,
+* *`.machine_readable/descriptiles/STATE.a2ml`* — reports `version 0.1.0-dev`,
   `completion-percentage 30`, `maturity alpha`, last-updated 2026-05-28, and is
   weighted toward the OikosBot product. For the DSL specifically, the check + parse
   layers are more mature than 30% suggests; desugar is the gating blocker.

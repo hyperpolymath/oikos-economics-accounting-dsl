@@ -34,11 +34,8 @@ pub fn check(model: &Model) -> Result<(), Vec<CheckError>> {
         }
 
         // Check 2: every non-terminal state can reach a terminal.
-        let terminals: HashSet<&InstrumentState> = inst
-            .states
-            .iter()
-            .filter(|s| is_terminal(s))
-            .collect();
+        let terminals: HashSet<&InstrumentState> =
+            inst.states.iter().filter(|s| is_terminal(s)).collect();
 
         for state in inst.states.iter().filter(|s| !is_terminal(s)) {
             if !can_reach_terminal(state, &terminals, inst) {
@@ -60,9 +57,7 @@ pub fn check(model: &Model) -> Result<(), Vec<CheckError>> {
 
 /// Compute the set of states reachable from the instrument's initial state
 /// by BFS over declared transitions.
-fn reachable_states(
-    inst: &oikos_syntax::instrument::InstrumentDecl,
-) -> HashSet<InstrumentState> {
+fn reachable_states(inst: &oikos_syntax::instrument::InstrumentDecl) -> HashSet<InstrumentState> {
     let mut reachable = HashSet::new();
     let mut queue = VecDeque::new();
     queue.push_back(inst.initial.clone());
@@ -85,9 +80,9 @@ fn is_terminal(state: &InstrumentState) -> bool {
 }
 
 /// Check whether `from` can reach any terminal state by forward BFS.
-fn can_reach_terminal<'a>(
+fn can_reach_terminal(
     from: &InstrumentState,
-    terminals: &HashSet<&'a InstrumentState>,
+    terminals: &HashSet<&InstrumentState>,
     inst: &oikos_syntax::instrument::InstrumentDecl,
 ) -> bool {
     // Build forward adjacency.

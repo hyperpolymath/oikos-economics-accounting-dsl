@@ -29,9 +29,9 @@ pub fn check(model: &Model) -> Result<(), Vec<CheckError>> {
 
     for cell in &model.godley.cells {
         let delta = match cell.sign {
-            GodleySign::Plus  =>  1,
+            GodleySign::Plus => 1,
             GodleySign::Minus => -1,
-            GodleySign::Zero  =>  0,
+            GodleySign::Zero => 0,
         };
         *column_sums.entry(cell.sector.as_str()).or_insert(0) += delta;
     }

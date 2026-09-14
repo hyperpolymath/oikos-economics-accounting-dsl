@@ -13,31 +13,39 @@ use oikos_syntax::span::Span;
 #[derive(Debug, Error)]
 pub enum CheckError {
     // ── Structural invariants ─────────────────────────────────────────────────
-
     /// The Godley matrix column for a sector does not sum to zero.
-    #[error(
-        "accounting identity violated: sector `{sector}` column sums to {net:+}, not zero"
-    )]
-    GodleyImbalance { sector: String, net: i64, span: Span },
+    #[error("accounting identity violated: sector `{sector}` column sums to {net:+}, not zero")]
+    GodleyImbalance {
+        sector: String,
+        net: i64,
+        span: Span,
+    },
 
     /// An instrument typestate machine contains an unreachable state.
-    #[error(
-        "instrument `{instrument}`: state `{state}` is unreachable from initial state"
-    )]
-    UnreachableState { instrument: String, state: String, span: Span },
+    #[error("instrument `{instrument}`: state `{state}` is unreachable from initial state")]
+    UnreachableState {
+        instrument: String,
+        state: String,
+        span: Span,
+    },
 
     /// An instrument typestate machine has no path from a non-terminal state
     /// to any terminal state (Settled or Void).
-    #[error(
-        "instrument `{instrument}`: state `{state}` has no path to a terminal state"
-    )]
-    NonTerminatingState { instrument: String, state: String, span: Span },
+    #[error("instrument `{instrument}`: state `{state}` has no path to a terminal state")]
+    NonTerminatingState {
+        instrument: String,
+        state: String,
+        span: Span,
+    },
 
     // ── Name resolution ───────────────────────────────────────────────────────
-
     /// A name is declared more than once in the same namespace.
     #[error("duplicate {kind} name `{name}`")]
-    DuplicateName { kind: String, name: String, span: Span },
+    DuplicateName {
+        kind: String,
+        name: String,
+        span: Span,
+    },
 
     /// A reference to an account that was not declared.
     #[error("unknown account `{name}`")]
@@ -60,17 +68,16 @@ pub enum CheckError {
     UnknownActivePeriod { name: String, span: Span },
 
     // ── Currency / dimension checks ───────────────────────────────────────────
-
     /// A transfer moves money between accounts denominated in different currencies.
     #[error(
         "currency mismatch in transfer `{from_account}` → `{to_account}`: \
          source is {from_currency}, destination is {to_currency}"
     )]
     TransferCurrencyMismatch {
-        from_account:  String,
-        to_account:    String,
+        from_account: String,
+        to_account: String,
         from_currency: String,
-        to_currency:   String,
+        to_currency: String,
         span: Span,
     },
 
@@ -80,18 +87,21 @@ pub enum CheckError {
          `{account}` currency `{account_currency}`"
     )]
     AmountCurrencyMismatch {
-        account:          String,
+        account: String,
         account_currency: String,
-        amount_currency:  String,
+        amount_currency: String,
         span: Span,
     },
 
     /// Generic dimension mismatch (used by the Ephapax desugar pass).
     #[error("dimension mismatch: cannot combine `{lhs}` and `{rhs}`")]
-    DimensionMismatch { lhs: String, rhs: String, span: Span },
+    DimensionMismatch {
+        lhs: String,
+        rhs: String,
+        span: Span,
+    },
 
     // ── Desugaring ────────────────────────────────────────────────────────────
-
     /// An error propagated from the desugaring pass.
     #[error("desugaring error: {0}")]
     Desugar(#[from] DesugarError),

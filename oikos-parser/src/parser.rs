@@ -88,7 +88,14 @@ fn period_decl<'src>() -> impl Parser<'src, &'src [Token], PeriodDecl, Extra<'sr
         .then(date())
         .then_ignore(just(Token::KwTo))
         .then(date())
-        .map(|(((name, kind), from), to)| PeriodDecl { name, kind, from, to, parent: None, span: syn() })
+        .map(|(((name, kind), from), to)| PeriodDecl {
+            name,
+            kind,
+            from,
+            to,
+            parent: None,
+            span: syn(),
+        })
 }
 
 /// `account deposits : Stock GBP`
@@ -102,11 +109,18 @@ fn account_decl<'src>() -> impl Parser<'src, &'src [Token], AccountDecl, Extra<'
         .then_ignore(just(Token::Colon))
         .then(kind)
         .then(currency())
-        .map(|((name, kind), currency)| AccountDecl { name, kind, currency, description: None, span: syn() })
+        .map(|((name, kind), currency)| AccountDecl {
+            name,
+            kind,
+            currency,
+            description: None,
+            span: syn(),
+        })
 }
 
 /// `asset deposits`  /  `liability mortgage`
-fn sector_item<'src>() -> impl Parser<'src, &'src [Token], (bool, AccountRef), Extra<'src>> + Clone {
+fn sector_item<'src>() -> impl Parser<'src, &'src [Token], (bool, AccountRef), Extra<'src>> + Clone
+{
     just(Token::KwAsset)
         .to(true)
         .or(just(Token::KwLiability).to(false))
@@ -128,9 +142,20 @@ fn sector_decl<'src>() -> impl Parser<'src, &'src [Token], SectorDecl, Extra<'sr
             let mut assets: Vec<AccountRef> = Vec::new();
             let mut liabilities: Vec<AccountRef> = Vec::new();
             for (is_asset, aref) in raw {
-                if is_asset { assets.push(aref); } else { liabilities.push(aref); }
+                if is_asset {
+                    assets.push(aref);
+                } else {
+                    liabilities.push(aref);
+                }
             }
-            SectorDecl { name, accounts: vec![], assets, liabilities, description: None, span: syn() }
+            SectorDecl {
+                name,
+                accounts: vec![],
+                assets,
+                liabilities,
+                description: None,
+                span: syn(),
+            }
         })
 }
 
@@ -178,14 +203,31 @@ fn interpret_godley_tokens(tokens: Vec<Token>) -> GodleyMatrix {
     //   stride = 4:  row 0 → groups[0..4], row 1 → groups[4..8]
     //   num_rows = (groups.len() - 1) / stride
 
-    let stride = match groups.iter().enumerate().skip(1).find(|(_, g)| g.is_empty()) {
+    let stride = match groups
+        .iter()
+        .enumerate()
+        .skip(1)
+        .find(|(_, g)| g.is_empty())
+    {
         Some((i, _)) => i,
-        None => return GodleyMatrix { cells: vec![], sectors: vec![], accounts: vec![], span: syn() },
+        None => {
+            return GodleyMatrix {
+                cells: vec![],
+                sectors: vec![],
+                accounts: vec![],
+                span: syn(),
+            }
+        }
     };
 
     // stride < 2 means no cell columns exist at all (pathological input).
     if stride < 2 || groups.len() < stride + 1 {
-        return GodleyMatrix { cells: vec![], sectors: vec![], accounts: vec![], span: syn() };
+        return GodleyMatrix {
+            cells: vec![],
+            sectors: vec![],
+            accounts: vec![],
+            span: syn(),
+        };
     }
 
     let num_rows = (groups.len() - 1) / stride;
@@ -210,7 +252,10 @@ fn interpret_godley_tokens(tokens: Vec<Token>) -> GodleyMatrix {
             .get(base + 1)
             .and_then(|g| cell_as_ident(g))
             .unwrap_or_default();
-        accounts.push(AccountRef { name: account_name.clone(), span: syn() });
+        accounts.push(AccountRef {
+            name: account_name.clone(),
+            span: syn(),
+        });
 
         for col in 0..sectors.len() {
             let sign = groups
@@ -218,7 +263,10 @@ fn interpret_godley_tokens(tokens: Vec<Token>) -> GodleyMatrix {
                 .map(|g| cell_as_sign(g))
                 .unwrap_or(GodleySign::Zero);
             cells.push(GodleyCell {
-                account: AccountRef { name: account_name.clone(), span: syn() },
+                account: AccountRef {
+                    name: account_name.clone(),
+                    span: syn(),
+                },
                 sector: sectors.get(col).cloned().unwrap_or_default(),
                 sign,
                 span: syn(),
@@ -226,19 +274,28 @@ fn interpret_godley_tokens(tokens: Vec<Token>) -> GodleyMatrix {
         }
     }
 
-    GodleyMatrix { cells, sectors, accounts, span: syn() }
+    GodleyMatrix {
+        cells,
+        sectors,
+        accounts,
+        span: syn(),
+    }
 }
 
 fn cell_as_ident(group: &[Token]) -> Option<SmolStr> {
     group.iter().find_map(|t| {
-        if let Token::Ident(s) = t { Some(s.clone()) } else { None }
+        if let Token::Ident(s) = t {
+            Some(s.clone())
+        } else {
+            None
+        }
     })
 }
 
 fn cell_as_sign(group: &[Token]) -> GodleySign {
     for t in group {
         match t {
-            Token::Plus  => return GodleySign::Plus,
+            Token::Plus => return GodleySign::Plus,
             Token::Minus => return GodleySign::Minus,
             _ => {}
         }
@@ -263,16 +320,19 @@ fn godley_block<'src>() -> impl Parser<'src, &'src [Token], GodleyMatrix, Extra<
         .delimited_by(just(Token::LBrace), just(Token::RBrace))
         .map(interpret_godley_tokens);
 
-    just(Token::KwGodley)
-        .ignore_then(inner_tokens)
+    just(Token::KwGodley).ignore_then(inner_tokens)
 }
 
 // ── Expressions ───────────────────────────────────────────────────────────────
 
 fn money_expr<'src>() -> impl Parser<'src, &'src [Token], MoneyExpr, Extra<'src>> + Clone {
-    number()
-        .then(currency())
-        .map(|(amount, currency)| MoneyExpr::Literal(MoneyLiteral { amount, currency, span: syn() }))
+    number().then(currency()).map(|(amount, currency)| {
+        MoneyExpr::Literal(MoneyLiteral {
+            amount,
+            currency,
+            span: syn(),
+        })
+    })
 }
 
 /// `transfer wages → deposits { amount: 2_500.00 GBP  description: "..." }`
@@ -294,7 +354,13 @@ fn transfer_expr<'src>() -> impl Parser<'src, &'src [Token], Expr, Extra<'src>> 
         .then(account_ref())
         .then(body)
         .map(|((from, to), (amount, description))| {
-            Expr::Transfer(TransferExpr { from, to, amount, description, span: syn() })
+            Expr::Transfer(TransferExpr {
+                from,
+                to,
+                amount,
+                description,
+                span: syn(),
+            })
         })
 }
 
@@ -307,7 +373,12 @@ fn close_expr<'src>() -> impl Parser<'src, &'src [Token], Expr, Extra<'src>> + C
         .then_ignore(just(Token::KwInto))
         .then(ident())
         .map(|((account, from_period), to_period)| {
-            Expr::PeriodClose(PeriodCloseExpr { account, from_period, to_period, span: syn() })
+            Expr::PeriodClose(PeriodCloseExpr {
+                account,
+                from_period,
+                to_period,
+                span: syn(),
+            })
         })
 }
 
@@ -319,27 +390,39 @@ fn close_expr<'src>() -> impl Parser<'src, &'src [Token], Expr, Extra<'src>> + C
 /// by the `rate` keyword; only the `from → to` currency pair is needed.
 fn rate_decl<'src>() -> impl Parser<'src, &'src [Token], FxRate, Extra<'src>> + Clone {
     just(Token::KwRate)
-        .ignore_then(ident())       // rate name
+        .ignore_then(ident()) // rate name
         .then_ignore(just(Token::Colon))
-        .then(currency())           // from currency
+        .then(currency()) // from currency
         .then_ignore(arrow())
-        .then(currency())           // to currency
-        .then(number())             // rate value
+        .then(currency()) // to currency
+        .then(number()) // rate value
         .then_ignore(just(Token::KwOn))
-        .then(date())               // effective date
-        .map(|((((name, from), to), rate), on)| FxRate { name, from, to, rate, on, span: syn() })
+        .then(date()) // effective date
+        .map(|((((name, from), to), rate), on)| FxRate {
+            name,
+            from,
+            to,
+            rate,
+            on,
+            span: syn(),
+        })
 }
 
 /// `convert 1_000.00 GBP via GBP_USD_Q4 into usd_account`
 fn convert_expr<'src>() -> impl Parser<'src, &'src [Token], Expr, Extra<'src>> + Clone {
     just(Token::KwConvert)
-        .ignore_then(money_expr())          // amount and source currency
+        .ignore_then(money_expr()) // amount and source currency
         .then_ignore(just(Token::KwVia))
-        .then(ident())                      // named FX rate
+        .then(ident()) // named FX rate
         .then_ignore(just(Token::KwInto))
-        .then(account_ref())                // destination account
+        .then(account_ref()) // destination account
         .map(|((amount, rate_name), destination)| {
-            Expr::FxConversion(FxConversionExpr { amount, rate_name, destination, span: syn() })
+            Expr::FxConversion(FxConversionExpr {
+                amount,
+                rate_name,
+                destination,
+                span: syn(),
+            })
         })
 }
 
@@ -347,14 +430,15 @@ fn convert_expr<'src>() -> impl Parser<'src, &'src [Token], Expr, Extra<'src>> +
 
 /// Map a bare identifier to an `InstrumentState`.
 /// Built-in states are recognised by name; anything else becomes `Custom`.
-fn instrument_state<'src>() -> impl Parser<'src, &'src [Token], InstrumentState, Extra<'src>> + Clone {
+fn instrument_state<'src>() -> impl Parser<'src, &'src [Token], InstrumentState, Extra<'src>> + Clone
+{
     ident().map(|s| match s.as_str() {
-        "Draft"         => InstrumentState::Draft,
-        "Issued"        => InstrumentState::Issued,
+        "Draft" => InstrumentState::Draft,
+        "Issued" => InstrumentState::Issued,
         "PartiallyPaid" => InstrumentState::PartiallyPaid,
-        "Settled"       => InstrumentState::Settled,
-        "Void"          => InstrumentState::Void,
-        _               => InstrumentState::Custom(s),
+        "Settled" => InstrumentState::Settled,
+        "Void" => InstrumentState::Void,
+        _ => InstrumentState::Custom(s),
     })
 }
 
@@ -372,7 +456,8 @@ fn instrument_state<'src>() -> impl Parser<'src, &'src [Token], InstrumentState,
 ///     description: "Standard invoice lifecycle"   -- optional
 /// }
 /// ```
-fn instrument_decl<'src>() -> impl Parser<'src, &'src [Token], InstrumentDecl, Extra<'src>> + Clone {
+fn instrument_decl<'src>() -> impl Parser<'src, &'src [Token], InstrumentDecl, Extra<'src>> + Clone
+{
     // `states Draft, Issued, PartiallyPaid, Settled, Void`
     let states_clause = just(Token::KwStates).ignore_then(
         instrument_state()
@@ -388,7 +473,11 @@ fn instrument_decl<'src>() -> impl Parser<'src, &'src [Token], InstrumentDecl, E
     let transition = instrument_state()
         .then_ignore(arrow())
         .then(instrument_state())
-        .map(|(from, to)| StateTransition { from, to, span: syn() });
+        .map(|(from, to)| StateTransition {
+            from,
+            to,
+            span: syn(),
+        });
 
     // `transitions { Draft → Issued  ... }`
     let transitions_clause = just(Token::KwTransitions).ignore_then(
@@ -415,9 +504,17 @@ fn instrument_decl<'src>() -> impl Parser<'src, &'src [Token], InstrumentDecl, E
                 .then(description_clause)
                 .delimited_by(just(Token::LBrace), just(Token::RBrace)),
         )
-        .map(|((name, currency), (((states, initial), transitions), description))| {
-            InstrumentDecl { name, currency, states, initial, transitions, description, span: syn() }
-        })
+        .map(
+            |((name, currency), (((states, initial), transitions), description))| InstrumentDecl {
+                name,
+                currency,
+                states,
+                initial,
+                transitions,
+                description,
+                span: syn(),
+            },
+        )
 }
 
 // ── Model ─────────────────────────────────────────────────────────────────────
@@ -467,19 +564,33 @@ fn model_parser<'src>() -> impl Parser<'src, &'src [Token], Model, Extra<'src>> 
             let mut body = Vec::new();
             for item in items {
                 match item {
-                    Item::Period(p)     => periods.push(p),
-                    Item::Account(a)    => accounts.push(a),
-                    Item::Sector(s)     => sectors.push(s),
+                    Item::Period(p) => periods.push(p),
+                    Item::Account(a) => accounts.push(a),
+                    Item::Sector(s) => sectors.push(s),
                     Item::Instrument(i) => instruments.push(i),
-                    Item::FxRate(r)     => fx_rates.push(r),
-                    Item::Godley(g)     => godley_opt = Some(g),
-                    Item::Expr(e)       => body.push(e),
+                    Item::FxRate(r) => fx_rates.push(r),
+                    Item::Godley(g) => godley_opt = Some(g),
+                    Item::Expr(e) => body.push(e),
                 }
             }
             let godley = godley_opt.unwrap_or(GodleyMatrix {
-                cells: vec![], sectors: vec![], accounts: vec![], span: syn(),
+                cells: vec![],
+                sectors: vec![],
+                accounts: vec![],
+                span: syn(),
             });
-            Model { name, active_period, periods, fx_rates, accounts, instruments, sectors, godley, body, span: syn() }
+            Model {
+                name,
+                active_period,
+                periods,
+                fx_rates,
+                accounts,
+                instruments,
+                sectors,
+                godley,
+                body,
+                span: syn(),
+            }
         })
 }
 
@@ -495,20 +606,15 @@ pub fn parse_model(source: &str) -> Result<(Option<Model>, Vec<ParseError>), Par
     let mut token_spans: Vec<std::ops::Range<usize>> = Vec::new();
 
     for (result, range) in Token::lexer(source).spanned() {
-        match result {
-            Ok(tok) => {
-                tokens.push(tok);
-                token_spans.push(range);
-            }
-            // Unrecognised characters are silently skipped for now.
-            // TODO: collect lexer errors and surface them as ParseError::UnknownChar.
-            Err(_) => {}
+        if let Ok(tok) = result {
+            tokens.push(tok);
+            token_spans.push(range);
         }
+        // Unrecognised characters are silently skipped for now.
+        // TODO: collect lexer errors and surface them as ParseError::UnknownChar.
     }
 
-    let (model, raw_errors) = model_parser()
-        .parse(tokens.as_slice())
-        .into_output_errors();
+    let (model, raw_errors) = model_parser().parse(tokens.as_slice()).into_output_errors();
 
     let errors = raw_errors
         .into_iter()
@@ -516,16 +622,20 @@ pub fn parse_model(source: &str) -> Result<(Option<Model>, Vec<ParseError>), Par
             // e.span() is a SimpleSpan<usize> over token indices.
             // Map to the corresponding source byte offsets.
             let tok_start = e.span().start;
-            let tok_end   = e.span().end;
+            let tok_end = e.span().end;
             let char_start = token_spans.get(tok_start).map(|r| r.start).unwrap_or(0);
-            let char_end   = token_spans
+            let char_end = token_spans
                 .get(tok_end.saturating_sub(1))
                 .map(|r| r.end)
                 .unwrap_or(source.len());
             let span = Span::new(char_start, char_end);
             ParseError::UnexpectedToken {
-                expected: e.expected().map(|t| format!("{t:?}")).collect::<Vec<_>>().join(", "),
-                found:    format!("{:?}", e.found()),
+                expected: e
+                    .expected()
+                    .map(|t| format!("{t:?}"))
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                found: format!("{:?}", e.found()),
                 span,
             }
         })

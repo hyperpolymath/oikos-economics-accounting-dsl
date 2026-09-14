@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
+# This workflow is managed by gh actions-lock.
 # SPDX-FileCopyrightText: 2025 Jonathan D.A. Jewell
 #
 # Oikos Economics Accounting DSL - Continuous Integration
@@ -19,21 +20,26 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: "1.83"
+          components: rustfmt, clippy
       - name: Cache Cargo
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@v6.1.0
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
             target
           key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Lint
+        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - name: Test
-        run: cargo test --workspace
+        run: cargo test --workspace --locked
   security:
     name: Security Checks
     runs-on: ubuntu-latest
@@ -43,9 +49,9 @@ jobs:
       security-events: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "fs"
           scan-ref: "."
@@ -54,7 +60,7 @@ jobs:
           output: "trivy-results.sarif"
         continue-on-error: true
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@5595ccaf912efad79be6eef63a5619ff05969be3 # v3.28.1
+        uses: github/codeql-action/upload-sarif@v4.38.0
         with:
           sarif_file: "trivy-results.sarif"
         continue-on-error: true

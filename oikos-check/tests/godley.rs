@@ -132,13 +132,11 @@ fn single_minus_imbalanced() {
     let Err(errors) = check_model(&m) else {
         panic!("expected Err, got Ok");
     };
-    assert!(
-        errors.iter().any(|e| matches!(
-            e,
-            CheckError::GodleyImbalance { sector, net, .. }
-            if sector == "Banks" && *net == -1
-        ))
-    );
+    assert!(errors.iter().any(|e| matches!(
+        e,
+        CheckError::GodleyImbalance { sector, net, .. }
+        if sector == "Banks" && *net == -1
+    )));
 }
 
 #[test]
@@ -155,7 +153,7 @@ fn two_sectors_one_imbalanced() {
             plus("consumption", "Banks"),
             plus("wages", "Households"),
             minus("wages", "Banks"),
-            plus("interest", "Banks"),  // deliberate imbalance
+            plus("interest", "Banks"), // deliberate imbalance
         ],
         vec!["Households", "Banks"],
         vec!["consumption", "wages", "interest"],
@@ -169,13 +167,11 @@ fn two_sectors_one_imbalanced() {
         .filter(|e| matches!(e, CheckError::GodleyImbalance { .. }))
         .collect();
     assert_eq!(godley_errors.len(), 1);
-    assert!(
-        godley_errors.iter().any(|e| matches!(
-            e,
-            CheckError::GodleyImbalance { sector, net, .. }
-            if sector == "Banks" && *net == 1
-        ))
-    );
+    assert!(godley_errors.iter().any(|e| matches!(
+        e,
+        CheckError::GodleyImbalance { sector, net, .. }
+        if sector == "Banks" && *net == 1
+    )));
 }
 
 #[test]
@@ -185,10 +181,7 @@ fn both_sectors_imbalanced_both_reported() {
     // | thing     | +     | -   |   Alice:+1, Bob:-1
     // Neither is 0; both should be reported.
     let m = model_godley(
-        vec![
-            plus("thing", "Alice"),
-            minus("thing", "Bob"),
-        ],
+        vec![plus("thing", "Alice"), minus("thing", "Bob")],
         vec!["Alice", "Bob"],
         vec!["thing"],
     );

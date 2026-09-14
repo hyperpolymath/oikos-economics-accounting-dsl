@@ -30,16 +30,16 @@ pub fn check(model: &Model, symbols: &SymbolTable<'_>) -> Vec<CheckError> {
         let Expr::Transfer(t) = expr else { continue };
 
         let from_decl = symbols.account(t.from.name.as_str());
-        let to_decl   = symbols.account(t.to.name.as_str());
+        let to_decl = symbols.account(t.to.name.as_str());
 
         // Rule 1: source and destination currencies must match.
         if let (Some(from), Some(to)) = (from_decl, to_decl) {
             if from.currency.code != to.currency.code {
                 errors.push(CheckError::TransferCurrencyMismatch {
-                    from_account:  t.from.name.to_string(),
-                    to_account:    t.to.name.to_string(),
+                    from_account: t.from.name.to_string(),
+                    to_account: t.to.name.to_string(),
                     from_currency: from.currency.code.to_string(),
-                    to_currency:   to.currency.code.to_string(),
+                    to_currency: to.currency.code.to_string(),
                     span: t.span,
                 });
             }
@@ -48,9 +48,9 @@ pub fn check(model: &Model, symbols: &SymbolTable<'_>) -> Vec<CheckError> {
             if let MoneyExpr::Literal(lit) = &t.amount {
                 if lit.currency.code != from.currency.code {
                     errors.push(CheckError::AmountCurrencyMismatch {
-                        account:          t.from.name.to_string(),
+                        account: t.from.name.to_string(),
                         account_currency: from.currency.code.to_string(),
-                        amount_currency:  lit.currency.code.to_string(),
+                        amount_currency: lit.currency.code.to_string(),
                         span: lit.span,
                     });
                 }

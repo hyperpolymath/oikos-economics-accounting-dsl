@@ -29,11 +29,17 @@ pub fn s() -> Span {
 // ── Account / sector helpers ──────────────────────────────────────────────────
 
 pub fn account_ref(name: &str) -> AccountRef {
-    AccountRef { name: name.into(), span: s() }
+    AccountRef {
+        name: name.into(),
+        span: s(),
+    }
 }
 
 pub fn gbp() -> CurrencyCode {
-    CurrencyCode { code: "GBP".into(), span: s() }
+    CurrencyCode {
+        code: "GBP".into(),
+        span: s(),
+    }
 }
 
 pub fn stock(name: &str) -> AccountDecl {
@@ -67,11 +73,7 @@ pub fn minus(account: &str, sector: &str) -> GodleyCell {
 
 /// Build a model containing only the given Godley matrix.
 /// All other fields are empty/synthetic.
-pub fn model_godley(
-    cells: Vec<GodleyCell>,
-    sectors: Vec<&str>,
-    accounts: Vec<&str>,
-) -> Model {
+pub fn model_godley(cells: Vec<GodleyCell>, sectors: Vec<&str>, accounts: Vec<&str>) -> Model {
     Model {
         name: "TestModel".into(),
         active_period: "P".into(),
@@ -93,13 +95,22 @@ pub fn model_godley(
 
 /// Minimal empty Godley matrix (no rows, no columns).
 pub fn empty_godley() -> GodleyMatrix {
-    GodleyMatrix { cells: vec![], sectors: vec![], accounts: vec![], span: s() }
+    GodleyMatrix {
+        cells: vec![],
+        sectors: vec![],
+        accounts: vec![],
+        span: s(),
+    }
 }
 
 // ── Instrument helpers ────────────────────────────────────────────────────────
 
 pub fn transition(from: InstrumentState, to: InstrumentState) -> StateTransition {
-    StateTransition { from, to, span: s() }
+    StateTransition {
+        from,
+        to,
+        span: s(),
+    }
 }
 
 pub fn instrument(

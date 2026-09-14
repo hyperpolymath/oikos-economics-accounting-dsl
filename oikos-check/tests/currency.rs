@@ -14,10 +14,11 @@ use oikos_syntax::{
     sector::AccountRef,
     span::Span,
 };
-use smol_str::SmolStr;
-
 fn currency(code: &str) -> CurrencyCode {
-    CurrencyCode { code: code.into(), span: Span::SYNTHETIC }
+    CurrencyCode {
+        code: code.into(),
+        span: Span::SYNTHETIC,
+    }
 }
 
 fn account(name: &str, ccy: &str) -> AccountDecl {
@@ -31,7 +32,10 @@ fn account(name: &str, ccy: &str) -> AccountDecl {
 }
 
 fn aref(name: &str) -> AccountRef {
-    AccountRef { name: name.into(), span: Span::SYNTHETIC }
+    AccountRef {
+        name: name.into(),
+        span: Span::SYNTHETIC,
+    }
 }
 
 fn literal(amount: &str, ccy: &str) -> MoneyExpr {
@@ -45,7 +49,7 @@ fn literal(amount: &str, ccy: &str) -> MoneyExpr {
 fn transfer(from: &str, to: &str, amount: MoneyExpr) -> Expr {
     Expr::Transfer(TransferExpr {
         from: aref(from),
-        to:   aref(to),
+        to: aref(to),
         amount,
         description: None,
         span: Span::SYNTHETIC,
@@ -59,7 +63,7 @@ fn same_currency_transfer_passes() {
     use fixtures::model_godley;
     let mut model = model_godley(vec![], vec![], vec![]);
     model.accounts = vec![account("wages", "GBP"), account("deposits", "GBP")];
-    model.body     = vec![transfer("wages", "deposits", literal("100.00", "GBP"))];
+    model.body = vec![transfer("wages", "deposits", literal("100.00", "GBP"))];
     assert!(check_model(&model).is_ok());
 }
 
@@ -70,9 +74,15 @@ fn mismatched_account_currencies_reported() {
     use fixtures::model_godley;
     let mut model = model_godley(vec![], vec![], vec![]);
     model.accounts = vec![account("gbp_account", "GBP"), account("usd_account", "USD")];
-    model.body     = vec![transfer("gbp_account", "usd_account", literal("100.00", "GBP"))];
+    model.body = vec![transfer(
+        "gbp_account",
+        "usd_account",
+        literal("100.00", "GBP"),
+    )];
 
-    let Err(errors) = check_model(&model) else { panic!("expected Err") };
+    let Err(errors) = check_model(&model) else {
+        panic!("expected Err")
+    };
     assert!(errors.iter().any(|e| matches!(e,
         CheckError::TransferCurrencyMismatch {
             from_account, to_account, from_currency, to_currency, ..
@@ -92,9 +102,11 @@ fn amount_currency_mismatch_reported() {
     let mut model = model_godley(vec![], vec![], vec![]);
     // Both accounts are GBP but the amount is denominated in USD
     model.accounts = vec![account("wages", "GBP"), account("deposits", "GBP")];
-    model.body     = vec![transfer("wages", "deposits", literal("100.00", "USD"))];
+    model.body = vec![transfer("wages", "deposits", literal("100.00", "USD"))];
 
-    let Err(errors) = check_model(&model) else { panic!("expected Err") };
+    let Err(errors) = check_model(&model) else {
+        panic!("expected Err")
+    };
     assert!(errors.iter().any(|e| matches!(e,
         CheckError::AmountCurrencyMismatch {
             account, account_currency, amount_currency, ..
@@ -113,11 +125,17 @@ fn account_mismatch_and_amount_mismatch_both_reported() {
     let mut model = model_godley(vec![], vec![], vec![]);
     // Different account currencies AND wrong amount currency
     model.accounts = vec![account("gbp_acc", "GBP"), account("usd_acc", "USD")];
-    model.body     = vec![transfer("gbp_acc", "usd_acc", literal("100.00", "EUR"))];
+    model.body = vec![transfer("gbp_acc", "usd_acc", literal("100.00", "EUR"))];
 
-    let Err(errors) = check_model(&model) else { panic!("expected Err") };
+    let Err(errors) = check_model(&model) else {
+        panic!("expected Err")
+    };
     // TransferCurrencyMismatch (GBP vs USD)
-    assert!(errors.iter().any(|e| matches!(e, CheckError::TransferCurrencyMismatch { .. })));
+    assert!(errors
+        .iter()
+        .any(|e| matches!(e, CheckError::TransferCurrencyMismatch { .. })));
     // AmountCurrencyMismatch (EUR vs GBP)
-    assert!(errors.iter().any(|e| matches!(e, CheckError::AmountCurrencyMismatch { .. })));
+    assert!(errors
+        .iter()
+        .any(|e| matches!(e, CheckError::AmountCurrencyMismatch { .. })));
 }

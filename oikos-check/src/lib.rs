@@ -70,5 +70,9 @@ pub fn check_model(model: &Model) -> Result<(), Vec<CheckError>> {
     //     Err(e) => errors.push(CheckError::Desugar(e)),
     // }
 
-    if errors.is_empty() { Ok(()) } else { Err(errors) }
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors)
+    }
 }

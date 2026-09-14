@@ -1,0 +1,86 @@
+== Security Policy
+
+_SustainaBot_ adheres to *Rhodium Standard Repo (RSR)* principles,
+emphasizing *reversibility, attestation, and minimal attack surfaces*.
+
+'''''
+
+=== Supported Versions
+
+[width="100%",cols="15%,28%,57%",options="header",]
+|===
+|Version |Supported |Notes
+|0.x.x |:white_check_mark: |Only the *latest minor version* receives
+security updates.
+|===
+
+____
+*Note*: SustainaBot is in *early development*. Security updates are
+prioritized for the latest release.
+____
+
+'''''
+
+=== Reporting a Vulnerability
+
+*Do not report vulnerabilities publicly* (e.g., GitHub/GitLab Issues).
+Instead, use one of these *private channels*:
+
+[arabic]
+. *GitLab Security Advisories*:
+https://gitlab.com/hyperpolymath/scarcity-bot/-/security/advisories/new[Report
+a vulnerability] _(Preferred for traceability and RSR compliance.)_
+. *Email*: `+security@hyperpolymath.org+` (PGP: `+0xYOUR_ED448_KEY+`)
+_(For urgent or sensitive disclosures.)_
+
+'''''
+
+==== What to Include
+
+Provide *detailed, actionable information*: - *Type of issue*: -
+Example: Buffer overflow, XSS, supply chain tampering, or *waste metric
+spoofing*. - *Affected components*: - Source file paths (e.g.,
+`+lib/audit/exec.rb+`). - *Commit hash/tag/branch* or direct URL. -
+*Reproduction steps*: - Command-line invocations, config snippets, or
+*Justfile recipes* used. - *Impact*: - How could an attacker exploit
+this? (e.g., "`Fake carbon savings reports,`" "`CI/CD pipeline
+hijacking.`") - *Proof-of-Concept*: - Code snippets or *SHAKE256 hashes*
+of malicious inputs (if applicable).
+
+'''''
+
+=== Response Timeline
+
+[width="100%",cols="28%,21%,51%",options="header",]
+|===
+|Phase |Target |Notes
+|*Initial Response* |≤48 hours |Acknowledges receipt.
+|*Status Update* |≤7 days |Progress or mitigation advice.
+|*Resolution* |≤30 days |For *critical issues* (e.g., RCE, data leaks).
+|*Attestation* |Post-resolution |Logs signed with *Ed448* in `+logs/+`.
+|===
+
+'''''
+
+=== Security Considerations
+
+==== Data Handling
+
+SustainaBot processes: - *Source code* (for waste analysis). -
+*Dependency graphs* (economic/ecological impact). - *CI/CD
+configurations* (e.g., GitLab pipelines). - *VoID/Dublin Core metadata*
+(interoperability with WordPress/Drupal).
+
+*Guiding Principles*: - *Minimal Retention*: Data deleted post-audit
+unless *explicitly logged for reversibility*. - *Hashing*: All logs use
+*SHAKE256/Ed448* (see `+logs/README.md+`). - *BOINC Distributed Audits*:
+- Nodes *never store raw repo data*; only *hashed waste metrics* are
+shared. - *Cloud Backups*: - Metadata backed up to
+*Dropbox/OneDrive/Syncthing/iDrive* (per Memory #3). - Full backups
+stored on *RAID 10 + Acronis* (per Memory #4).
+
+==== Integration Security
+
+* *Environment Variables*: configure `SCARCITY_API_KEY` and
+`GITHUB_TOKEN` only through the deployment secret store. The repository
+contains no example assignments or fallback values for either secret.

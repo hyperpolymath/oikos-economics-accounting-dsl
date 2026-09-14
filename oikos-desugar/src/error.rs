@@ -42,9 +42,7 @@ pub enum DesugarError {
     CurrencyMismatch { lhs: String, rhs: String },
 
     /// An instrument state transition is not declared in the typestate machine.
-    #[error(
-        "instrument `{instrument}` has no transition from `{from}` to `{to}`"
-    )]
+    #[error("instrument `{instrument}` has no transition from `{from}` to `{to}`")]
     InvalidStateTransition {
         instrument: String,
         from: String,

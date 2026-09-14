@@ -9,10 +9,7 @@
 
 use oikos_parser::parse;
 use oikos_syntax::{
-    account::AccountKind,
-    godley::GodleySign,
-    instrument::InstrumentState,
-    period::PeriodKind,
+    account::AccountKind, godley::GodleySign, instrument::InstrumentState, period::PeriodKind,
 };
 
 // ── Helper ────────────────────────────────────────────────────────────────────
@@ -230,7 +227,7 @@ fn godley_empty_cells_are_zero() {
     let m = parse_ok(src);
     let cells = &m.godley.cells;
     assert_eq!(cells[0].sign, GodleySign::Zero); // A column — empty
-    assert_eq!(cells[1].sign, GodleySign::Plus);  // B column
+    assert_eq!(cells[1].sign, GodleySign::Plus); // B column
     assert_eq!(cells[2].sign, GodleySign::Minus); // C column
 }
 
@@ -411,13 +408,16 @@ fn instrument_builtin_states_recognised() {
     "#;
     let m = parse_ok(src);
     let i = &m.instruments[0];
-    assert_eq!(i.states, vec![
-        InstrumentState::Draft,
-        InstrumentState::Issued,
-        InstrumentState::PartiallyPaid,
-        InstrumentState::Settled,
-        InstrumentState::Void,
-    ]);
+    assert_eq!(
+        i.states,
+        vec![
+            InstrumentState::Draft,
+            InstrumentState::Issued,
+            InstrumentState::PartiallyPaid,
+            InstrumentState::Settled,
+            InstrumentState::Void,
+        ]
+    );
 }
 
 #[test]
@@ -459,7 +459,10 @@ fn instrument_with_description_parsed() {
         }
     "#;
     let m = parse_ok(src);
-    assert_eq!(m.instruments[0].description.as_deref(), Some("Simple two-step bond"));
+    assert_eq!(
+        m.instruments[0].description.as_deref(),
+        Some("Simple two-step bond")
+    );
 }
 
 #[test]
@@ -523,9 +526,9 @@ fn transition_from_and_to_captured() {
     let m = parse_ok(src);
     let t = &m.instruments[0].transitions;
     assert_eq!(t[0].from, InstrumentState::Draft);
-    assert_eq!(t[0].to,   InstrumentState::Settled);
+    assert_eq!(t[0].to, InstrumentState::Settled);
     assert_eq!(t[1].from, InstrumentState::Draft);
-    assert_eq!(t[1].to,   InstrumentState::Void);
+    assert_eq!(t[1].to, InstrumentState::Void);
 }
 
 // ── FX rate declarations ──────────────────────────────────────────────────────
@@ -633,7 +636,10 @@ fn rate_and_convert_in_full_model() {
     let m = parse_ok(src);
     assert_eq!(m.fx_rates.len(), 1);
     assert_eq!(m.body.len(), 1);
-    assert!(matches!(m.body[0], oikos_syntax::expr::Expr::FxConversion(_)));
+    assert!(matches!(
+        m.body[0],
+        oikos_syntax::expr::Expr::FxConversion(_)
+    ));
 }
 
 // ── Error cases ───────────────────────────────────────────────────────────────

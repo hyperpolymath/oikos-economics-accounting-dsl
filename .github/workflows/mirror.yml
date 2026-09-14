@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
+# This workflow is managed by gh actions-lock.
 name: Mirror to Git Forges
 on:
   push:
@@ -8,5 +9,5 @@ permissions:
   contents: read
 jobs:
   mirror:
-    uses: hyperpolymath/standards/.github/workflows/mirror-reusable.yml@d135b05bfc647d0c0fbfedc7e80f37ea50f49236
+    uses: hyperpolymath/standards/.github/workflows/mirror-reusable.yml@6b38eb50104901e2fec80f9455a972bc3eced813
     secrets: inherit

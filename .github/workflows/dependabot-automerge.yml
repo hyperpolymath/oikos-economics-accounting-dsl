@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
+# This workflow is managed by gh actions-lock.
 #
 # dependabot-automerge.yml — enable GitHub's native auto-merge on
 # Dependabot pull requests that match a declared severity / ecosystem
@@ -39,19 +40,25 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 permissions:
-  contents: read # needed to enable auto-merge
-  pull-requests: write # needed to approve
+  contents: read
+  pull-requests: read
   # NB: keep narrow — do NOT add secrets: read or id-token: write here.
+  # The `automerge` job declares its own permissions block, which REPLACES
+  # this one, so this workflow-level default stays read-only on purpose.
 jobs:
   automerge:
     # Only run for PRs actually authored by Dependabot.
     if: github.actor == 'dependabot[bot]' && github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write # needed to enable auto-merge
+      pull-requests: write # needed to approve
+      # NB: keep narrow — do NOT add secrets: read or id-token: write here.
     steps:
       - name: Fetch Dependabot metadata
         id: meta
-        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        uses: dependabot/fetch-metadata@v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       # --- Policy gate -------------------------------------------------------
@@ -95,13 +102,16 @@ jobs:
           fi
 
           if $is_security && $is_patch_or_minor && ! $is_high_or_critical; then
-            echo "action=automerge" >> "$GITHUB_OUTPUT"
+            action=automerge
           else
-            echo "action=skip" >> "$GITHUB_OUTPUT"
+            action=skip
           fi
-          echo "security=$is_security" >> "$GITHUB_OUTPUT"
-          echo "update_type=$UPDATE_TYPE" >> "$GITHUB_OUTPUT"
-          echo "ghsa=$GHSA_ID" >> "$GITHUB_OUTPUT"
+          {
+            echo "action=$action"
+            echo "security=$is_security"
+            echo "update_type=$UPDATE_TYPE"
+            echo "ghsa=$GHSA_ID"
+          } >> "$GITHUB_OUTPUT"
       - name: Approve PR (if policy allows)
         if: steps.policy.outputs.action == 'automerge'
         env:

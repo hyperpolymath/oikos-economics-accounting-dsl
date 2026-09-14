@@ -26,5 +26,9 @@ pub enum SyntaxError {
 
     /// A period's end date precedes its start date.
     #[error("period `{name}` ends ({to}) before it starts ({from})")]
-    PeriodEndBeforeStart { name: String, from: String, to: String },
+    PeriodEndBeforeStart {
+        name: String,
+        from: String,
+        to: String,
+    },
 }

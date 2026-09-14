@@ -126,7 +126,7 @@ FIRST MOVE
   `cargo build` / `cargo test` at commit `907e10e`.
 * `docs/status/STATUS-2026-06-19.adoc` — the musts/intends/wishes detail.
 * `docs/alib-aggregate-bridge.adoc` — the alib Route A vs B design note (owner-gated).
-* `README.adoc` / `EXPLAINME.adoc` / `.machine_readable/6a2/STATE.a2ml` — the repo's
+* `README.adoc` / `EXPLAINME.adoc` / `.machine_readable/descriptiles/STATE.a2ml` — the repo's
   own claims; note the "scaffold only" / "oikos-check stub" drift the AFFIRMATION flags.
 * Cross-repo: `echo-types` (the proof companion) hosts the general `EchoAggregation`
   (#175); its own `AFFIRMATION.adoc` + `docs/status/STATUS-2026-06-19.adoc` are the

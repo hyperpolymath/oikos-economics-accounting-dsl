@@ -4,7 +4,7 @@ Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 -->
 ## Machine-Readable Artefacts
 
-The following files in `.machine_readable/6a2/` contain structured project metadata (a2ml format; the prior `.scm` Guile-Scheme files were retired estate-wide):
+The following files in `.machine_readable/descriptiles/` contain structured project metadata (a2ml format; the prior `.scm` Guile-Scheme files were retired estate-wide):
 
 - `STATE.a2ml` - Current project state and progress
 - `META.a2ml` - Architecture decisions and development practices
@@ -28,13 +28,13 @@ The following files in `.machine_readable/6a2/` contain structured project metad
 | **Rust** | Oikos DSL compiler crates | Repo root; performance-critical |
 | **AffineScript** (`.affine`) | OikosBot (`bot-integration-affine/`) | Affine types, dependent types, row polymorphism, extensible effects |
 | **Haskell** | OikosBot analyser backend (`analyzers/`) | Existing surface; pure analysis |
-| **Deno** | Runtime & package management | Replaces Node/npm/bun |
+| **Bun** | JS runtime & package management (tier 1) | Default for all new work. Runs compiled ESM/JS directly — no bundler step. Uses an npm-compatible `package.json` plus `bun.lock` — both are expected, not anti-patterns. |
 | **Tauri 2.0+** | Mobile apps (iOS/Android) | Rust backend + web UI |
 | **Dioxus** | Mobile apps (native UI) | Pure Rust, React-like |
 | **Gleam** | Backend services | Runs on BEAM or compiles to JS |
 | **Bash/POSIX Shell** | Scripts, automation | Keep minimal |
 | **Nickel** | Configuration language | For complex configs |
-| **A2ML** | State/meta files | `.machine_readable/6a2/*.a2ml` |
+| **A2ML** | State/meta files | `.machine_readable/descriptiles/*.a2ml` |
 | **Julia** | Batch scripts, data processing | Per RSR |
 | **OCaml** | AffineScript compiler upstream | Not in this repo (lives in `hyperpolymath/affinescript`) |
 | **Ada** | Safety-critical systems | Where required |
@@ -46,10 +46,10 @@ The following files in `.machine_readable/6a2/` contain structured project metad
 | TypeScript | AffineScript (for OikosBot) / Rust (for DSL) |
 | **ReScript** (new files) | **AffineScript** — the legacy `bot-integration/` ReScript was removed 2026-05-28 (oikos#41) |
 | JavaScript (new files) | AffineScript |
-| Node.js | Deno |
-| npm | Deno |
-| Bun | Deno |
-| pnpm/yarn | Deno |
+| Deno | Bun |
+| Node.js | Bun |
+| npm | Bun |
+| pnpm/yarn | Bun |
 | Go | Rust |
 | Python | Julia/Rust/AffineScript |
 | Java/Kotlin | Rust/Tauri/Dioxus |
@@ -70,8 +70,8 @@ Both are FOSS with independent governance (no Big Tech).
 
 1. **No new TypeScript files** - Write new code in AffineScript
 2. **No new ReScript files** - Legacy `bot-integration/` ReScript was retired 2026-05-28 (oikos#41); the AS port lives at `bot-integration-affine/`
-3. **No package.json - use deno.json deps** - Use deno.json imports
-4. **No node_modules in production** - Deno caches deps automatically
+3. **Use `package.json` + `bun.lock` for JS runtime deps** - Bun is npm-compatible; a manifest is REQUIRED
+4. **`bun install --production` for production deps** - resolved from `package.json`, pinned via `bun.lock`
 5. **No Go code** - Use Rust instead
 6. **No Python anywhere** - Use Julia for data/batch, Rust for systems
 7. **No Kotlin/Swift for mobile** - Use Tauri 2.0+ or Dioxus
@@ -81,7 +81,7 @@ Both are FOSS with independent governance (no Big Tech).
 
 - **Primary**: Guix (guix.scm)
 - **Fallback**: Nix (flake.nix)
-- **JS deps**: Deno (deno.json imports)
+- **JS deps**: Bun (`package.json` + `bun.lock`). Declare tooling as a devDependency and run `bunx --no-install --bun <tool>` — a bare `bunx <tool>` can fetch an unpinned package and may start Node via its shebang.
 
 ### Security Requirements
 
