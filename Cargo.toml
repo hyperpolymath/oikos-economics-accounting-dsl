@@ -31,14 +31,14 @@ oikos-check    = { path = "oikos-check" }
 serde          = { version = "1.0", features = ["derive"] }
 
 # ── String interning ─────────────────────────────────────────────────────────
-smol_str       = { version = "=0.3.2", features = ["serde"] }
+smol_str       = { version = "=0.3.6", features = ["serde"] }
 
 # ── Error handling ────────────────────────────────────────────────────────────
 thiserror      = "2"
 
 # ── Lexing / parsing ──────────────────────────────────────────────────────────
 logos          = "0.16"
-chumsky        = { version = "=1.0.0-alpha.7", default-features = false, features = ["std"] }
+chumsky        = { version = "=1.0.0-alpha.8", default-features = false, features = ["std"] }
 
 # ── Diagnostic reporting ─────────────────────────────────────────────────────
 
