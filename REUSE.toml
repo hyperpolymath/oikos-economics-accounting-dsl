@@ -34,7 +34,7 @@ SPDX-License-Identifier = "MPL-2.0"
 path = [
   "ARCHITECTURE.adoc",
   "CHANGELOG.adoc",
-  "CONTRIBUTING.adoc",
+  ".github/CONTRIBUTING.md",
   "GOVERNANCE.adoc",
   "MAINTAINERS",
   "MAINTAINERS.adoc",
