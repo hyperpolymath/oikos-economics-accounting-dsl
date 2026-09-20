@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 jobs:
-  scan:
+  hypatia:
     uses: hyperpolymath/standards/.github/workflows/hypatia-scan-reusable.yml@6b38eb50104901e2fec80f9455a972bc3eced813
     permissions:
       contents: read
