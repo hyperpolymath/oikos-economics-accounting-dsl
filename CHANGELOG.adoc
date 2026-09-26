@@ -32,9 +32,14 @@ regenerating the lockfile. GitHub refuses a run whose `+uses:+` version
 the lockfile does not record, at startup, with zero jobs — this is why
 `+CodeQL Security Analysis+` and `+GitHub Pages+` went to
 `+startup_failure+` on 2026-09-26 while reporting no log.
-`+haskell-actions/setup+` is re-locked at v2.12.1
-(`+0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d+`); `+github/codeql-action+`
-is held at v4.38.0.
+Both are held at the versions `+actions.lock+` already records —
+`+haskell-actions/setup+` v2.12.0 and `+github/codeql-action+` v4.38.0 —
+so the tree is self-consistent again. Re-landing the
+`+haskell-actions/setup+` v2.12.1 bump requires regenerating the
+lockfile with `+gh actions-lock+`
+(`+standards/scripts/update-actions-lock.sh+`); that lockfile is
+machine-generated and GitHub enforces it repo-wide, so it is not
+hand-edited here.
 * fix(ci): scan the SPDX header *block*, not line 1, in
 `+workflow-linter.yml+` and `+hooks/validate-spdx.sh+`.
 `+gh actions-lock+` prepends `+# This workflow is managed by gh
