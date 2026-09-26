@@ -9,16 +9,6 @@ updates:
         patterns:
           - "*"
     open-pull-requests-limit: 2
-    ignore:
-      # HOLD: github/codeql-action at v4.38.0. v4.38.1 fails GitHub
-      # workflow-startup validation estate-wide (rsr-template-repo
-      # dependabot HOLD; nexia-list#100/#101/#104), and a grouped bump also
-      # drifts from .github/workflows/actions.lock, which Dependabot cannot
-      # regenerate — GitHub then rejects the run at startup with ZERO jobs.
-      # That is precisely how CI went red on 2026-09-26 (#105).
-      # Bump deliberately, via `gh actions-lock`, once upstream verifies
-      # green. See .github/workflows/lock-sync-gate.yml.
-      - dependency-name: "github/codeql-action"
   
   - package-ecosystem: "cargo"
     directory: "/"

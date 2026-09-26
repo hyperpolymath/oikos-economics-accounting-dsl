@@ -25,13 +25,9 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          # ONE `with:` block. A duplicate key is a hard YAML error: GitHub
-          # rejects the whole workflow at startup — zero jobs, no log, no
-          # check run. `stable` matches the ref this step is recorded against
-          # in actions.lock; rustfmt and clippy are required by the format
-          # and lint steps below. The declared MSRV (1.83) is exercised
-          # separately by `just msrv-check`.
           toolchain: stable
+        with:
+          toolchain: "1.83"
           components: rustfmt, clippy
       - name: Cache Cargo
         uses: actions/cache@v6.1.0
@@ -67,7 +63,7 @@ jobs:
           output: "trivy-results.sarif"
         continue-on-error: true
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v4.38.0 # held estate-wide; see codeql.yml
+        uses: github/codeql-action/upload-sarif@v4.38.1
         with:
           sarif_file: "trivy-results.sarif"
         continue-on-error: true
