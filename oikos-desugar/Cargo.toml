@@ -16,9 +16,12 @@ oikos-syntax.workspace  = true
 thiserror.workspace     = true
 smol_str.workspace      = true
 
-# Ephapax IR — uncomment once the Ephapax parser is complete.
-# Desugaring is blocked on that milestone; this crate compiles but
-# the `desugar` function will return `Err(DesugarError::EphapaxNotAvailable)`
-# until the dependency is wired in.
+# Ephapax IR — the upstream parser milestone this was waiting on HAS shipped
+# (verified 2026-09-26 against hyperpolymath/ephapax@main: parser, lexer,
+# surface, syntax, ir and typing crates are all published; only the type
+# checker and WASM codegen remain in progress). What is still missing is the
+# wiring itself: these are path dependencies outside this workspace, and the
+# lowering is unimplemented and untested. Until it is wired, `desugar`
+# returns `Err(DesugarError::EphapaxNotAvailable)`. See issue #60.
 #
 # ephapax-ir.workspace = true
