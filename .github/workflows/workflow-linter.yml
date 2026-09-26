@@ -19,15 +19,30 @@ jobs:
       - uses: actions/checkout@v7.0.1
       - name: Check SPDX headers
         run: |
-          errors=0
+          # SCAN THE HEADER COMMENT BLOCK, NOT LINE 1.
+          #
+          # `gh actions-lock` prepends `# This workflow is managed by gh
+          # actions-lock.` to every workflow it mints a lockfile for, which
+          # pushes the SPDX identifier to line 2. A `head -1` test therefore
+          # fights the estate's own tooling and reports every workflow as
+          # unlicensed — 17 of 17 here, exiting 17. The canonical form is
+          # rsr-template-repo/.github/workflows/workflow-linter.yml, mirrored
+          # by standards' governance-reusable.yml ("Check SPDX headers +
+          # permissions"); both read the leading run of comment lines.
+          failed=0
           for f in .github/workflows/*.yml .github/workflows/*.yaml; do
             [ -f "$f" ] || continue
-            if ! head -1 "$f" | grep -q "SPDX-License-Identifier"; then
-              echo "ERROR: $f missing SPDX header"
-              errors=$((errors + 1))
+            if ! awk '/^---[[:space:]]*$/ { next } /^#/ { print; next } { exit }' "$f" \
+                 | grep -q "^# SPDX-License-Identifier:"; then
+              echo "ERROR: $f has no SPDX-License-Identifier in its header comment block"
+              failed=1
             fi
           done
-          exit $errors
+          if [ $failed -eq 1 ]; then
+            echo "Add '# SPDX-License-Identifier: MPL-2.0' to the leading comment block"
+            exit 1
+          fi
+          echo "All workflows have SPDX headers"
       - name: Check permissions declaration
         run: |
           errors=0
