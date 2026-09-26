@@ -34,11 +34,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4.38.1
+        # HELD at v4.38.0. v4.38.1 fails GitHub workflow-startup validation
+        # estate-wide (rsr-template-repo dependabot HOLD; nexia-list#100) and
+        # the bump also drifts from actions.lock, which kills the run before
+        # any job is created. Bump only via `gh actions-lock`, and only once
+        # upstream verifies green. See .github/dependabot.yml.
+        uses: github/codeql-action/init@v4.38.0
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4.38.1
+        uses: github/codeql-action/analyze@v4.38.0 # held with init@ above
         with:
           category: "/language:${{ matrix.language }}"
