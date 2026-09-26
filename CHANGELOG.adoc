@@ -18,6 +18,50 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 ==== Fixed
 
+* fix(ci): remove the duplicate `+with:+` key in `+ci.yml+`. GitHub
+rejects a workflow containing duplicate keys before creating any job —
+the run is recorded `+failure+` with zero jobs, no log and no check run.
+This is what the estate duplicate-key gate
+(`+standards/scripts/check-workflow-duplicate-keys.sh+`, wired into the
+Governance workflow) was failing on, and it had also been silently
+killing the `+CI+` workflow on every push.
+* fix(ci): reconcile `+actions.lock+` with the workflow YAML. Dependabot
+#105 bumped `+github/codeql-action+` to v4.38.1 and
+`+haskell-actions/setup+` to v2.12.1 in the workflows without
+regenerating the lockfile. GitHub refuses a run whose `+uses:+` version
+the lockfile does not record, at startup, with zero jobs — this is why
+`+CodeQL Security Analysis+` and `+GitHub Pages+` went to
+`+startup_failure+` on 2026-09-26 while reporting no log.
+`+haskell-actions/setup+` is re-locked at v2.12.1
+(`+0f8e8c99d88aeb3fbfd523f1ef2c6f762d10d64d+`); `+github/codeql-action+`
+is held at v4.38.0.
+* fix(ci): scan the SPDX header *block*, not line 1, in
+`+workflow-linter.yml+` and `+hooks/validate-spdx.sh+`.
+`+gh actions-lock+` prepends `+# This workflow is managed by gh
+actions-lock.+` to every workflow it locks, displacing the SPDX line to
+line 2, so the line-1 test reported all 17 workflows as unlicensed and
+exited 17. Now matches the canonical form in
+`+rsr-template-repo/.github/workflows/workflow-linter.yml+` and
+`+standards+` `+governance-reusable.yml+`.
+* chore(deps): hold `+github/codeql-action+` at v4.38.0 via a Dependabot
+`+ignore+` rule, matching the estate-wide HOLD in
+`+rsr-template-repo/.github/dependabot.yml+` — v4.38.1 fails GitHub
+workflow-startup validation estate-wide, and a grouped bump cannot
+regenerate `+actions.lock+`.
+
+==== Changed
+
+* docs(desugar): correct the stale blocker recorded in
+`+oikos-desugar/src/lib.rs+`, `+oikos-desugar/Cargo.toml+` and the
+workspace `+Cargo.toml+`. Issue #60 states this crate is blocked on the
+Ephapax *parser* milestone; verified on 2026-09-26 against
+`+hyperpolymath/ephapax@main+`, that milestone has shipped (parser,
+lexer, surface, syntax, ir and typing crates are published and recorded
+complete; only the type checker and WASM codegen remain in progress).
+The dependency stays commented out because it is an out-of-workspace
+path dependency and the lowering is unimplemented and untested — no
+working lowering is claimed, and the crate still has zero tests.
+
 * fix(lexer): opt in to logos 0.16 `+allow_greedy+` for line-comment
 skip (#37) — `+#[logos(skip("--[^\n]*", allow_greedy = true))]+`
 replaces the unbounded greedy attribute that logos 0.16’s new lint

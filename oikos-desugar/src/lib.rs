@@ -4,13 +4,26 @@
 
 //! `oikos-desugar` — desugaring pass from Oikos AST to Ephapax IR.
 //!
-//! # Status: blocked
+//! # Status: unblocked upstream, not yet wired
 //!
-//! This crate is **blocked on the Ephapax parser** (`hyperpolymath/ephapax`).
-//! Ephapax `ephapax-ir` and `ephapax-typing` crates exist and are stable, but
-//! end-to-end use of Oikos requires the Ephapax surface-language parser (which
-//! is not yet complete).  The desugaring logic is designed here; the Ephapax
-//! IR dependency is commented out in `Cargo.toml` until that milestone ships.
+//! **The originally recorded blocker has cleared.** Issue #60 and this
+//! comment both stated that this crate was blocked on the Ephapax
+//! surface-language parser. As verified on 2026-09-26 against
+//! `hyperpolymath/ephapax@main`, that milestone shipped: the upstream
+//! `ROADMAP.adoc` status snapshot records the "Lexer, parser, interpreter,
+//! REPL, CLI, S-expression IR, two-phase pipeline, Zig FFI, and conformance
+//! test suite" as complete, and the workspace now publishes `ephapax-parser`,
+//! `ephapax-lexer`, `ephapax-surface`, `ephapax-syntax`, `ephapax-ir` and
+//! `ephapax-typing` crates. The same snapshot records the **type checker** and
+//! WASM code generation as still in progress.
+//!
+//! So the dependency is commented out in `Cargo.toml` no longer because the
+//! parser is missing, but because the `ephapax-*` path dependencies have not
+//! been wired into this workspace and the lowering has not been implemented
+//! or tested. `desugar` therefore still returns
+//! [`DesugarError::EphapaxNotAvailable`], and **no claim of a working
+//! lowering is made here** — this crate has zero tests. See issue #60 for the
+//! acceptance criteria.
 //!
 //! # Desugaring map
 //!

@@ -42,7 +42,13 @@ chumsky        = { version = "=1.0.0-alpha.8", default-features = false, feature
 
 # ── Diagnostic reporting ─────────────────────────────────────────────────────
 
-# ── Ephapax IR (blocked: Ephapax parser not yet complete) ────────────────────
-# Uncomment once `hyperpolymath/ephapax` ships a stable parser.
+# ── Ephapax IR ────────────────────────────────────────────────────────────────
+# NOT blocked on the Ephapax parser any more: as of 2026-09-26 upstream
+# `hyperpolymath/ephapax@main` publishes ephapax-parser/-lexer/-surface/
+# -syntax/-ir/-typing and records them complete (only the type checker and
+# WASM codegen are still in progress). These stay commented out because they
+# are path dependencies outside this workspace and the lowering in
+# `oikos-desugar` is unimplemented and untested — not because the milestone
+# is missing. See issue #60.
 # ephapax-ir     = { path = "../ephapax/src/ephapax-ir" }
 # ephapax-typing = { path = "../ephapax/src/ephapax-typing" }
