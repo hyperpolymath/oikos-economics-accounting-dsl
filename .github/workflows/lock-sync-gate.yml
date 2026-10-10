@@ -11,7 +11,7 @@ name: Lock Sync Gate
 # 2026-09-22: 39 had silently dead CI from exactly this cause.
 # See hyperpolymath/standards#968.
 #
-# This workflow deliberately carries NO `uses:` of its own. It checks out by
+# This workflow deliberately carries NO `uses:` of its own. It fetches objects by
 # calling git in a `run:` step instead of using actions/checkout, so it has no
 # lockfile entry to go stale and is structurally immune to the very failure it
 # detects. Do not add a `uses:` to this file.
@@ -22,7 +22,7 @@ name: Lock Sync Gate
 
 on:
   workflow_dispatch:
-  pull_request:
+  pull_request_target:
   push:
     branches: [main]
 
@@ -30,7 +30,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: lock-sync-gate-${{ github.ref }}
+  group: lock-sync-gate-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -39,27 +39,60 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - name: Check out without actions/checkout
+      # pull_request_target keeps this workflow and validator base-owned. Its
+      # github.sha is the base commit, so fetch the proposed merge explicitly.
+      - name: Validate proposed workflow data with the trusted validator
         env:
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
           TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          # Authenticate the fetch. An anonymous clone works only for public
-          # repositories; this gate must also run on private ones. The header
-          # form is used rather than a token in the remote URL so the
-          # credential is never written into .git/config.
+          WORK=$(mktemp -d "${RUNNER_TEMP}/lock-sync.XXXXXX")
+          trap 'rm -rf "$WORK"' EXIT
+          git init -q --bare "$WORK/repo"
+          cd "$WORK/repo"
+          # Keep credentials out of git config. Never check out PR code.
           AUTH="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${TOKEN}" | base64 -w0)"
-          git init -q .
           git remote add origin "https://github.com/${REPO}.git"
-          git -c http.extraheader="${AUTH}" fetch -q --depth 1 origin "${SHA}"
-          git checkout -q FETCH_HEAD
-          echo "checked out ${SHA}"
+          git -c http.extraheader="${AUTH}" fetch -q --depth 1 origin "$SHA"
+          git show "${SHA}:scripts/check-lock-sync.sh" > "$WORK/validator.sh"
+          DATA_SHA="$SHA"
+          if [ -n "$PR_NUMBER" ]; then
+            git -c http.extraheader="${AUTH}" fetch -q --depth 2 origin "refs/pull/${PR_NUMBER}/merge"
+            DATA_SHA=$(git rev-parse FETCH_HEAD)
+            # A missing or stale merge ref must fail, never fall back to the head.
+            if [ "$(git rev-parse "${DATA_SHA}^1")" != "$SHA" ] || \
+               [ "$(git rev-parse "${DATA_SHA}^2")" != "$PR_HEAD" ]; then
+              echo "::error::Proposed merge does not match this event's base and head; rerun on the current PR."
+              exit 1
+            fi
+          fi
+          export DATA_SHA
+          export WF_DIR="$WORK/workflows"
+          mkdir "$WF_DIR"
+          # Materialise only regular workflow/lockfile blobs as data. In
+          # particular, do not follow PR-controlled symlinks or run its script.
+          python3 - <<'PYTHON'
+          import os
+          from pathlib import Path
+          import subprocess
 
-      - name: Verify lockfile synchronisation
-        run: |
-          set -euo pipefail
-          test -x scripts/check-lock-sync.sh \
-            || { echo "::error::scripts/check-lock-sync.sh missing or not executable"; exit 1; }
-          ./scripts/check-lock-sync.sh
+          entries = subprocess.check_output([
+              "git", "ls-tree", "-z", os.environ["DATA_SHA"] + ":.github/workflows"
+          ])
+          for entry in entries.split(b"\0"):
+              if not entry:
+                  continue
+              metadata, name = entry.split(b"\t", 1)
+              if name != b"actions.lock" and not name.endswith((b".yml", b".yaml")):
+                  continue
+              mode, kind, oid = metadata.split()
+              if mode not in (b"100644", b"100755") or kind != b"blob" or b"\n" in name:
+                  raise SystemExit("Workflow data must be regular files with single-line names")
+              data = subprocess.check_output(["git", "cat-file", "blob", oid])
+              (Path(os.environ["WF_DIR"]) / os.fsdecode(name)).write_bytes(data)
+          PYTHON
+          bash "$WORK/validator.sh" "$WF_DIR"
