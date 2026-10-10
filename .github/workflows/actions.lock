@@ -44,6 +44,7 @@ workflows:
         - 'hyperpolymath/smtp-notify-action@v0.5.0'
     '.github/workflows/scorecard.yml':
         - 'hyperpolymath/standards@da2c748aad55c1a1dcba00b60fe4a35017bc6540'
+    '.github/workflows/tmp-issue-ops.yml': []
     '.github/workflows/secret-scanner.yml':
         - 'hyperpolymath/standards@da2c748aad55c1a1dcba00b60fe4a35017bc6540'
     '.github/workflows/workflow-linter.yml':
