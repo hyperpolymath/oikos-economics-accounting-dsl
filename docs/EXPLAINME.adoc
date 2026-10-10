@@ -1,0 +1,140 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= Oikos — EXPLAINME
+:toc: preamble
+:icons: font
+
+This file maps README.adoc claims to their implementation evidence for
+sceptical developers.
+
+== "A typed DSL for stock-flow consistent macroeconomic modelling"
+
+[quote, README.adoc]
+____
+Oikos provides a surface language for stock-flow consistent (SFC)
+macroeconomic models in the tradition of Godley & Lavoie (2007).
+It desugars into Ephapax, inheriting its linear types, Tofte–Talpin regions,
+and typestate.
+____
+
+How this is implemented::
+The Cargo workspace at link:Cargo.toml[`Cargo.toml`] defines four crates:
+link:oikos-syntax/[`oikos-syntax/`] (the AST), link:oikos-parser/[`oikos-parser/`]
+(Logos lexer + Chumsky parser), link:oikos-desugar/[`oikos-desugar/`]
+(desugaring to Ephapax IR — blocked), and link:oikos-check/[`oikos-check/`]
+(type checker — blocked). The AST in `oikos-syntax/src/lib.rs` defines Rust
+types for `Stock`, `Flow`, `Sector`, `GodleyMatrix`, and `Instrument`.
+
+Caveat::
+`oikos-desugar` and `oikos-check` are blocked on the Ephapax surface-language
+parser milestone. They have stub implementations but cannot produce correct
+output until Ephapax's parser is complete.
+
+== "A model that violates any accounting identity does not compile"
+
+[quote, README.adoc]
+____
+The core guarantee: A model that violates any accounting identity does not
+compile.
+____
+
+How this is implemented::
+The Godley matrix invariant checker in `oikos-check/src/lib.rs` enforces that
+column sums in the Godley matrix balance at compile time (pre-desugar phase).
+The phantom type scheme in `oikos-syntax/src/lib.rs` uses `Stock<Currency>` and
+`Flow<Currency>` as distinct phantom types — the type checker rejects addition
+of a `Stock` and a `Flow` without an explicit integration step.
+
+Caveat::
+"At compile time" here means *at Oikos compiler invocation time*, not at Rust
+compilation time. The Oikos compiler is a Rust binary that type-checks Oikos
+source — it does not generate type errors via the Rust type system directly.
+Currency phantom types ensure `GBP + USD` is rejected, but this requires the
+Oikos parser to be complete.
+
+== "Stock ≠ Flow via distinct phantom types"
+
+[quote, README.adoc]
+____
+Stock ≠ Flow: Distinct phantom types; adding them without integration is a
+type error.
+____
+
+How this is implemented::
+`oikos-syntax/src/lib.rs` defines:
+
+[source,rust]
+----
+pub struct Stock<C: Currency>(Money<C>, PhantomData<()>);
+pub struct Flow<C: Currency>(Money<C>, PhantomData<()>);
+----
+
+The type checker rejects any expression that attempts to add a `Stock` and a
+`Flow` directly — the only valid operation is a `transfer` statement which
+consumes a `Flow` to update a `Stock`, consuming the `Flow` linearly.
+
+Caveat::
+This is implemented in the pre-desugar type checking phase. Full linear
+consumption (preventing double-counting) depends on Ephapax's linear type
+system in `oikos-check` — currently blocked.
+
+== "FX requires an explicit dated rate"
+
+[quote, README.adoc]
+____
+GBP ≠ USD: Currency as a phantom type parameter; FX requires an explicit
+dated rate.
+____
+
+How this is implemented::
+The `Currency` trait in `oikos-syntax` is parameterised. `GBP` and `USD` are
+separate zero-size type markers. An FX conversion requires a `RateOf<From, To>`
+value carrying a date and a rate — this is checked by the Oikos type checker,
+not inferred. The link:SPEC.adoc[`docs/SPEC.adoc`] documents the full BNF
+grammar including the `fx_expr` production.
+
+Caveat::
+The FX type check is implemented as a pre-desugar check. The full constraint
+that FX rates must be "dated" (i.e. reference a specific historical date)
+is enforced syntactically — semantic checks against real FX data are out of
+scope.
+
+== Dogfooded Across The Account
+
+[cols="1,2,2", options="header"]
+|===
+| Technology / Pattern | Used here | Also used in
+
+| Ephapax IR as compilation target
+| Oikos desugars to Ephapax linear-typed IR
+| link:https://github.com/hyperpolymath/ephapax[ephapax] (direct dependency)
+
+| Chumsky parser combinators
+| `oikos-parser/src/lib.rs` recursive descent
+| link:https://github.com/hyperpolymath/nextgen-languages[nextgen-languages]
+  (various language parsers)
+
+| Phantom types for domain safety
+| `Stock<GBP>` vs `Flow<GBP>` distinction
+| link:https://github.com/hyperpolymath/ephapax[ephapax]
+  (linear type witnesses)
+
+| Logos lexer
+| Fast tokenisation of Oikos source
+| link:https://github.com/hyperpolymath/nextgen-languages[nextgen-languages]
+
+| EUPL-1.2 licence
+| This repo
+| Unique licence in the estate — other repos use MPL-2.0
+|===
+
+== Known Gaps
+
+The `oikos-desugar` and `oikos-check` crates are blocked on the Ephapax
+surface-language parser. Pre-desugar checks (Godley invariant, instrument
+typestate reachability) are runnable today; full type checking requires
+Ephapax to land its parser milestone.
+
+The integrations with Betlang, Eclexia, and Julia the Viper described in
+the README are design-stage only — nothing is wired yet.

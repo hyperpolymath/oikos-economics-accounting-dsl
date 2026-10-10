@@ -157,7 +157,9 @@ full surface-source → desugared-IR → verdict pipeline is not yet wired end t
 
 == See also
 
-* `AFFIRMATION.adoc` (this repo, new) — the dated, signed, falsifiable receipt for
+* `docs/AFFIRMATION.adoc` (this repo, new; at the root when written, moved on
+  2026-10-10 by the issue #109 root-shape alignment) — the dated, signed,
+  falsifiable receipt for
   the green `cargo build` / `cargo test` at the anchored commit.
 * `docs/handoffs/OIKOS-NEXT-CLAUDE-2026-06-19.adoc` — the ready-to-paste prompt for
   the next session.

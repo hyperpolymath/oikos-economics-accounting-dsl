@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+#
+# pre-commit — the local mirror of the cheap, workflow-shaped CI gates.
+#
+# These four checks used to sit in a root `hooks/` directory that nothing
+# installed: no pre-commit framework config, no core.hooksPath, no Justfile
+# recipe. Two of them could not have run even if wired (validate-codeql.sh died
+# on its own `set -euo pipefail` + grep probe; validate-sha-pins.sh demanded a
+# rule this repository deliberately does not follow). Issue #109 item 1 moved
+# them to `.github/hooks/` — the canon location, reachable by
+# `git config core.hooksPath` — and repaired them, so they are live here rather
+# than dead there.
+#
+# Enable once per clone:
+#     .github/hooks/install.sh
+#   (equivalently: git config core.hooksPath .github/hooks)
+#
+# Emergency bypass: git commit --no-verify. Every check below is also enforced
+# in CI, so a bypass defers a failure, it does not remove one.
+
+set -uo pipefail
+
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+status=0
+
+run() {  # $1 = label, $2 = script basename
+  local label="$1" script="$2"
+  if [ ! -f "$HOOK_DIR/$script" ]; then
+    echo "SKIP  $label — $script not found"
+    return
+  fi
+  echo "───── $label"
+  if ! bash "$HOOK_DIR/$script"; then
+    echo "FAIL  $label"
+    status=1
+  else
+    echo "ok    $label"
+  fi
+  echo
+}
+
+run "Workflow SPDX headers (leading comment block)" validate-spdx.sh
+run "Workflow permissions declarations"            validate-permissions.sh
+run "CodeQL language matrix"                        validate-codeql.sh
+run "actions.lock covers every uses: ref"           validate-action-refs.sh
+
+if [ "$status" -ne 0 ]; then
+  cat >&2 <<'MSG'
+pre-commit refused. Fix the findings above, or bypass deliberately with:
+    git commit --no-verify
+A bypass only moves the failure to CI: Workflow Security Linter, Lock Sync
+Gate and Estate Rules all run on the push, and the push will go red.
+MSG
+fi
+
+exit "$status"

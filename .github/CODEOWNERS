@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 # CODEOWNERS - Define code review assignments for GitHub
 # See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
@@ -6,10 +7,22 @@
 * @hyperpolymath
 
 # Security-sensitive files require explicit ownership
-SECURITY.md @hyperpolymath
+#
+# `SECURITY.md` here named a root file that no longer exists: the security
+# policy is `.github/SECURITY.md` since the 2026-10-10 dedup (issue #109 item 1,
+# ruling D186), and a root-anchored pattern with no matching path is a rule that
+# silently owns nothing. Same for `contractiles/`, which was never a root path in
+# this repository — the contractiles have always lived under .machine_readable/,
+# which the line above already covers.
+.github/SECURITY.md @hyperpolymath
 .github/workflows/ @hyperpolymath
 .machine_readable/ @hyperpolymath
-contractiles/ @hyperpolymath
+
+# Repository shape is owner-level: the allowlist and the gates that read it.
+.machine_readable/root-allow.txt @hyperpolymath
+scripts/check-root-shape.sh @hyperpolymath
+scripts/check-lock-sync.sh @hyperpolymath
+scripts/check-doc-links.sh @hyperpolymath
 
 # License files
 LICENSE @hyperpolymath
@@ -21,6 +34,7 @@ LICENSES/ @hyperpolymath
 
 # Documentation
 README* @hyperpolymath
+docs/** @hyperpolymath
 CONTRIBUTING* @hyperpolymath
 CODE_OF_CONDUCT* @hyperpolymath
 GOVERNANCE* @hyperpolymath
@@ -30,5 +44,7 @@ ROADMAP* @hyperpolymath
 
 # Build and CI
 Justfile @hyperpolymath
+build/** @hyperpolymath
+ci/** @hyperpolymath
 Makefile @hyperpolymath
 *.sh @hyperpolymath

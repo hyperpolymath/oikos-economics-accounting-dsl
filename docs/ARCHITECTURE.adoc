@@ -1,0 +1,69 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+== Architecture
+
+=== Overview
+
+This repository follows a modular, maintainable architecture designed
+for clarity, scalability, and long-term sustainability.
+
+=== Directory Structure
+
+Rust lives in the four workspace crates and nowhere else: cargo resolves a
+workspace from `Cargo.toml` at the root, so there is no root `src/` and no
+`config/` directory (configuration is per-crate, or Nickel in
+`.machine_readable/`). The *root shape* is not a style preference here: it is
+allowlisted by `.machine_readable/root-allow.txt` and gated by
+`scripts/check-root-shape.sh` in CI (`Estate Rules`).
+
+....
+.
+├── oikos-syntax/          # AST, phantom types, Godley matrix, instrument typestate
+├── oikos-parser/          # logos lexer + chumsky parser -> oikos-syntax::Model
+├── oikos-desugar/          # lowering to Ephapax IR  (not yet load-bearing)
+├── oikos-check/            # type checking via Ephapax (pre-desugar checks only)
+├── Cargo.toml              # [workspace] members + shared lints
+├── Cargo.lock              # pinned dependency graph (CI builds with --locked)
+├── Justfile                 # task entry point (`just --list`)
+├── build/manifest.scm       # Guix dev shell (was `manifest.scm` at root)
+├── ci/.gitlab-ci.yml        # GitLab mirror pipeline (was `.gitlab-ci.yml` at root)
+├── scripts/                # repo gates: check-root-shape.sh, check-lock-sync.sh, check-doc-links.sh
+├── tests/shape/             # self-tests that prove the shape gates can FAIL
+├── docs/                    # prose (SPEC.adoc, DESIGN.adoc, EXPLAINME.adoc, ROADMAP.adoc, ...)
+├── .machine_readable/       # contractiles/, descriptiles/, root-allow.txt
+├── .github/                  # workflows, community-health files, versioned git hooks
+├── www/.well-known/          # security.txt (RFC 9116)
+├── LICENSE / LICENSES/ / REUSE.toml   # MPL-2.0 code, CC-BY-SA-4.0 prose
+└── README.adoc               # entry point
+....
+
+The relocated paths above are the 2026-10-10 outcome of issue #109 item 1;
+anything new at the root needs a justified line in the allowlist first.
+
+=== Design Principles
+
+* *Separation of Concerns*: Each module has a single responsibility
+* *Testability*: Code is written to be easily testable
+* *Documentation*: All public APIs are documented
+* *Configuration*: Environment-specific settings are externalized
+
+=== Dependencies
+
+* External dependencies are minimized and clearly declared
+* Version pinning is used for reproducibility
+
+=== Security Considerations
+
+* Sensitive data is never committed to the repository
+* Secrets are managed through environment variables or secure vaults
+* Regular dependency audits are performed
+
+=== Maintainability
+
+* Code follows consistent style guidelines
+* Pull requests require review and CI checks
+* Issues and discussions are tracked transparently
+
+'''''
+
+_Last updated: 2026-10-10 (root shape realigned, issue #109)_

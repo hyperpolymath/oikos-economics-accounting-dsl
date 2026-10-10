@@ -1,46 +1,74 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+#
+# REUSE.toml — licence annotations for files that cannot carry an SPDX header.
+#
+# Deliberately MINIMAL. Every path that no longer resolves is a silent hole:
+# REUSE.toml does not fail when an entry points at a moved or deleted file, it
+# simply stops covering anything, and the file it used to cover goes missing
+# from the licence index. This repository shipped exactly that for months —
+# entries for `Mustfile`, `manifest.scm`, `hooks/*.sh`, `ARCHITECTURE.adoc`,
+# `SECURITY.adoc`, `MAINTAINERS`, `MAINTAINERS.adoc`, `.github/funding.yml` and
+# `.well-known/security.txt` (the last pointing at a path that had already moved
+# to `www/.well-known/`), and nothing complained because the only job that runs
+# `reuse lint` lives in `ci/.gitlab-ci.yml`, whose pipeline could not be created
+# at all (a job declared a stage missing from `stages:`). Fixed 2026-10-10 with
+# issue #109 item 1.
+#
+# Rule, therefore: an in-file SPDX header is always preferred; every text file
+# in this repository that can carry one does (`.github/workflows/
+# workflow-linter.yml` gates the workflows, and the header is what `reuse`
+# reads). Annotate here only when a header is impossible or would be
+# destructive to the tool that owns the file.
 version = 1
 
 [[annotations]]
+# Machine-written or comment-less: a header cannot survive here.
+#   * Cargo.lock — rewritten wholesale by cargo on every dependency change.
+#   * *.json     — JSON has no comment syntax.
+#   * actions.lock — written by `gh actions-lock`; the tool's own banner
+#                    occupies line 1 (which is what broke the old one-line
+#                    SPDX check; see .github/workflows/workflow-linter.yml).
+#   * *.a2ml     — the descriptile/contractile dialects are parsed by estate
+#                  tooling that expects `(s-expression)` bodies; most already
+#                  carry a `#` header, the annotation covers the ones that do not.
 path = [
-  ".editorconfig",
-  ".github/CODEOWNERS",
-  ".github/FUNDING.yml",
-  ".github/copilot/coding-agent.yml",
-  ".github/dependabot.yml",
-  ".github/funding.yml",
+  "Cargo.lock",
   ".github/label-classifier.json",
   ".github/labels.json",
-  ".github/scripts/classify-issue.jq",
   ".github/workflows/actions.lock",
-  ".github/workflows/*.yml",
-  ".gitattributes",
-  ".gitignore",
-  ".machine_readable/contractiles/**/*.a2ml",
-  ".machine_readable/descriptiles/0-AI-MANIFEST.a2ml",
-  ".well-known/security.txt",
-  "0-AI-MANIFEST.a2ml",
-  "Cargo.lock",
-  "Mustfile",
-  "REUSE.toml",
-  "hooks/*.sh",
-  "manifest.scm",
-  "mise.toml",
+  ".machine_readable/**/*.a2ml",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2024-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"
 SPDX-License-Identifier = "MPL-2.0"
 
 [[annotations]]
+# This file, and configuration whose opening lines are load-bearing for the
+# tool that reads them:
+#   * .editorconfig          — `root = true` is the conventional first line
+#                              that parsers look for;
+#   * .gitmessage            — shown verbatim inside `git commit`, so every line
+#                              added here is a line a human reads;
+#   * CITATION.cff           — parsed by GitHub's citation export; comments are
+#                              legal YAML but the estate's cff consumers are not
+#                              all comment-tolerant;
+#   * .mailmap               — git matches `Name <email>` lines;
+#   * .gitleaksignore        — read line-by-line as ignore patterns by gitleaks.
+#                              Listed in BOTH locations because the estate is
+#                              mid-move of this file into `.machine_readable/`
+#                              (branch arena/fd4b224f) and an annotation whose
+#                              path does not exist is inert: covering both keeps
+#                              the licence attached whichever spelling lands.
 path = [
-  "ARCHITECTURE.adoc",
-  "CHANGELOG.adoc",
-  ".github/CONTRIBUTING.md",
-  "GOVERNANCE.adoc",
-  "MAINTAINERS",
-  "MAINTAINERS.adoc",
-  "SECURITY.adoc",
-  "docs/tech-debt-2026-05-26.adoc",
+  "REUSE.toml",
+  ".editorconfig",
+  ".gitmessage",
+  "CITATION.cff",
+  ".mailmap",
+  ".gitleaksignore",
+  ".machine_readable/.gitleaksignore",
 ]
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2024-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"
-SPDX-License-Identifier = "CC-BY-SA-4.0"
+SPDX-FileCopyrightText = "2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>"
+SPDX-License-Identifier = "MPL-2.0"

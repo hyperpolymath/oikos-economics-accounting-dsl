@@ -1,0 +1,155 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# Estate Rules — the repository-shape half of hyperpolymath/standards'
+# conventions, enforced where a change is made rather than at the next audit.
+#
+# Two rules, each with its instrument proved before its verdict is trusted:
+#
+#   1. Root shape. The repository root is allowlisted bidirectionally by
+#      .machine_readable/root-allow.txt and checked by scripts/check-root-shape.sh
+#      (adopted verbatim from rsr-template-repo). Issue #109 item 1 exists
+#      because this repo had NO allowlist at all: the checker exits 2 on a
+#      missing allowlist, which is a setup error, and a setup error on an
+#      unadopted gate is indistinguishable from a gate that reports conformance.
+#      Absence of red was read as absence of drift for months.
+#
+#   2. Documentation links. scripts/check-doc-links.sh requires every relative
+#      link in a .adoc/.md file to resolve. Relocations (rule 1) and this check
+#      are a pair: a move that leaves its inbound links dangling is a
+#      half-finished move, and `www/.well-known/security.txt` in this repo
+#      pointed at a different repository for months with every gate green.
+#
+# Each rule also runs its own self-test first. Both scripts can fail a build —
+# that is only worth trusting if they have been seen to fail on a planted fault,
+# which is the standard the Lock Sync Gate set in #114 and the template applies
+# to itself in .github/workflows/estate-rules.yml.
+#
+# This workflow deliberately carries NO `uses:` of its own: it checks out by
+# calling git in a `run:` step rather than using actions/checkout, so it has no
+# entry in .github/workflows/actions.lock to go stale. That is what makes it
+# immune to the exact fault it guards (see .github/workflows/lock-sync-gate.yml,
+# same design and same reason). Do not add a `uses:` to this file — if a step
+# ever needs one, it belongs in a workflow that is not a lockfile gate.
+#
+# There is also no `paths:` filter, on purpose: a filtered workflow never
+# reports on pull requests that miss the filter, which deadlocks any branch
+# ruleset that requires this check.
+
+name: Estate Rules
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: estate-rules-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shape:
+    name: Root shape and documentation links match canon
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out without actions/checkout
+        env:
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Header form rather than a token embedded in the remote URL, so the
+          # credential is never written into .git/config. An anonymous clone
+          # would do for a public repo; this gate must also run on private ones.
+          AUTH="AUTHORIZATION: basic $(printf 'x-access-token:%s' "${TOKEN}" | base64 -w0)"
+          git init -q .
+          git remote add origin "https://github.com/${REPO}.git"
+          git -c http.extraheader="${AUTH}" fetch -q --depth 1 origin "${SHA}"
+          git checkout -q FETCH_HEAD
+          echo "checked out ${SHA}"
+
+      - name: Root-shape gate self-test (a planted stray must fail it)
+        run: |
+          set -euo pipefail
+          test -x scripts/check-root-shape.sh \
+            || { echo "::error::scripts/check-root-shape.sh missing or not executable"; exit 1; }
+          test -x tests/shape/check_root_shape_test.sh \
+            || { echo "::error::tests/shape/check_root_shape_test.sh missing or not executable"; exit 1; }
+          ./tests/shape/check_root_shape_test.sh
+
+      - name: Root matches .machine_readable/root-allow.txt
+        run: |
+          set -euo pipefail
+          # Exit codes: 0 conform, 1 drift, 2 setup error (no allowlist). 2 is
+          # surfaced as a failure rather than swallowed: an absent allowlist is
+          # the state this repository was in, and it must never read as passing.
+          ./scripts/check-root-shape.sh .
+
+      - name: Documentation-link gate self-test
+        run: |
+          set -euo pipefail
+          test -x scripts/check-doc-links.sh \
+            || { echo "::error::scripts/check-doc-links.sh missing or not executable"; exit 1; }
+          ./scripts/check-doc-links.sh --self-test
+
+      - name: Every relative link in the prose resolves
+        run: ./scripts/check-doc-links.sh .
+
+      # The contractile's `actions-lock-in-sync` check delegates to
+      # scripts/check-lock-sync.sh, whose parser needs 3-argument match() — a GNU
+      # extension, so mawk will not do and the script exits FATAL rather than
+      # reporting a pass it did not compute. That makes the tool part of THIS
+      # gate's contract, not an ambient property of whoever's laptop: under
+      # MUST_STRICT a critical check that cannot run fails, so an image without
+      # gawk would red the gate for the state of the machine. Provided
+      # explicitly, and idempotently, so the run is reproducible on any runner.
+      - name: Provide gawk (check-lock-sync.sh needs 3-argument match())
+        run: |
+          set -euo pipefail
+          if command -v gawk >/dev/null 2>&1; then
+            echo "gawk already present: $(gawk --version | head -1)"
+          else
+            sudo apt-get -qq update
+            sudo apt-get install -y --no-install-recommends gawk
+            command -v gawk >/dev/null || { echo "::error::gawk install produced no gawk"; exit 1; }
+            echo "gawk installed for this job: $(gawk --version | head -1)"
+          fi
+
+      # The repository's own contractile, executed. `.machine_readable/contractiles/
+      # must/Mustfile.a2ml` used to say "Run with: must check" while no `must`
+      # existed here and no step ran it — which is how six of its checks came to
+      # name root files that had been deleted or moved. MUST_STRICT=1 makes a
+      # check that could not run (missing tool) a violation AT ITS DECLARED
+      # SEVERITY: an unevaluated critical fails the run, because in CI "not
+      # evaluated" must never be green, while `warning` and `advisory` failures do
+      # not block. That distinction is not a softening — the first CI run of this
+      # job escalated the contract's own declared-unmet `signed-commits` warning
+      # (this repository has no signing key, and the file says so) into a hard
+      # failure, which is a gate reporting the state of the machine instead of
+      # the state of the repo. Failing checks are also emitted as `::error::` /
+      # `::warning::` annotations, so the verdict names its culprit even where the
+      # step log is unreachable.
+      - name: Mustfile obligations hold (strict)
+        env:
+          MUST_STRICT: "1"
+        run: ./scripts/run-mustfile.sh
+
+      - name: Root-shape allowlist is not silently one-directional
+        run: |
+          set -euo pipefail
+          # Cheap structural check on the allowlist itself: an allowlist with no
+          # REQUIRED entries (no line without a leading '?') cannot fail
+          # direction 2, so it is a licence to add, not a gate. The template's
+          # own file records that this is exactly how its allowlist rotted.
+          required=$(sed -E 's/[[:space:]]*#.*$//' .machine_readable/root-allow.txt \
+                       | awk 'NF' | grep -vc '^?' || true)
+          echo "allowlist: ${required} required entr(y/ies), rest optional"
+          test "${required:-0}" -ge 20 \
+            || { echo "::error::root-allow.txt has fewer than 20 required entries — a shape gate that requires nothing is not a shape gate"; exit 1; }

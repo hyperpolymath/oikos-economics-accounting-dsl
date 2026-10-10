@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: MPL-2.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= Session Bindings (Thin Local Layer)
+
+This directory is the repo-local binding layer for the central
+session-management standards. Authoritative protocols live in
+
+* `+../standards/3-practice/session-management-standards/+`
+  (or `$SESSION_STANDARDS_DIR` when the standards checkout is elsewhere)
+
+This repository keeps only the thin part:
+
+* `+dispatch.sh+` maps canonical commands to central protocol paths and writes
+  the `+.session/LAST-CANONICAL-COMMAND.md+` record.
+* `+custom-checks.k9.ncl+` declares repo-local policy checks as a Nickel record.
+* `+local-hooks.sh+` provides repo-specific hook behaviour (append-only log).
+* `+../coordination.k9.ncl+` (repository root) declares the canonical command
+  list the dispatcher accepts.
+
+== Canonical commands
+
+----
+./session/dispatch.sh <verb> <object> <repo-path>
+
+intake repo | checkpoint change
+verify maintenance | verify substantial | verify release
+close planned | close urgent | recover repo
+handover full | handover split | handover model | handover human
+----
+
+== Runtime artefacts
+
+`+dispatch.sh+` writes into `+.session/+` at the target repository path. Those
+files are per-session scratch, not canonical text, and `+.session/+` is
+git-ignored — they must not appear at the repository root in a
+`git status` used for a root-shape check.
+
+== Evaluation
+
+`+coordination.k9.ncl+` and `+custom-checks.k9.ncl+` both open with the
+`+K9!+` transport envelope. Evaluate them with Nickel after stripping it:
+
+----
+sed '1{/^K9!$/d}' coordination.k9.ncl | nickel check
+----
+
+This repo does not yet carry `+scripts/validate-session-contracts.sh+`
+(that script is template-side). If a session-contract gate is wanted, adopt the
+script from `+rsr-template-repo+` and wire it into the Estate Rules workflow
+rather than inventing a local variant.

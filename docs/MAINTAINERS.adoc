@@ -1,0 +1,76 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= Maintainers
+Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+v3, 2026-10-10
+:icons: font
+
+This file is the *prose* description of who maintains the Oikos DSL and how
+that role is picked up and laid down. The *machine-readable* authority for
+review routing is link:../.github/CODEOWNERS[`.github/CODEOWNERS`]; where the
+two disagree, CODEOWNERS wins, because that is the file GitHub enforces.
+
+NOTE: Before 2026-10-10 this repository carried both a root `MAINTAINERS` file
+(a plain-Markdown table naming one primary maintainer) and a root
+`MAINTAINERS.adoc` (naming another). Neither referenced the other, both were
+listed as "last updated" months apart, and the `.adoc` claimed a `logs/`
+directory and a PGP key id that do not exist here. Ruling D186 removed the
+duplication; this file is the single survivor and merges both histories.
+
+== Current maintainers
+
+[width="100%",cols="22%,22%,20%,36%",options="header",]
+|===
+|Name |GitHub |Role |Scope
+|Jonathan D.A. Jewell |`+@hyperpolymath+` |Lead maintainer |All paths; releases; security advisories.
+|Metadatastician |`+@metadatastician+` |Maintainer |Day-to-day triage; primary since project start.
+|===
+
+Emeritus maintainers: none at this time.
+
+== Responsibilities
+
+* Reviewing and merging pull requests.
+* Managing releases and versioning.
+* Triaging issues.
+* Enforcing code standards and the root shape enforced by
+`scripts/check-root-shape.sh`.
+* Mentoring new contributors.
+* Participating in decision-making.
+
+== Expectations
+
+* Respond to issues and PRs within 72 hours.
+* Follow link:../.github/CODE_OF_CONDUCT.md[the Code of Conduct].
+* Be transparent in decisions; keep `CHANGELOG.adoc` and `docs/ROADMAP.adoc`
+  honest about what shipped.
+* Communicate clearly and respectfully.
+
+== Decision making
+
+* *Minor changes* — any maintainer: bug fixes, documentation, dependency bumps.
+* *Major changes* — discussion in an issue or PR, then one further maintainer's
+  approval: new features, architecture, public API.
+* *Breaking changes* — an issue-based RFC plus a migration note in
+  `CHANGELOG.adoc`. Oikos is `0.x`, so breaking changes are permitted; they are
+  not free.
+
+== Becoming a maintainer
+
+. Demonstrate consistent, high-quality contributions.
+. Show understanding of the project's goals and architecture
+  (link:DESIGN.adoc[`docs/DESIGN.adoc`], link:SPEC.adoc[`docs/SPEC.adoc`]).
+. Participate in code reviews and issue triage.
+. Be nominated by an existing maintainer.
+. Be approved by consensus of existing maintainers, then added to
+  `.github/CODEOWNERS` *and* to the table above in the same commit.
+
+== Security
+
+Vulnerabilities are handled under link:../.github/SECURITY.md[`.github/SECURITY.md`],
+not in public issues.
+
+== Backward compatibility
+
+Semantic versioning. While the project is `0.x.y`, breaking changes are allowed
+and are recorded in `CHANGELOG.adoc` rather than deferred.
