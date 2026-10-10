@@ -121,8 +121,10 @@ FILENAME == lockfile {
       haverec[ck(depkey)] = 1; disp[ck(depkey)] = depkey
       next
     }
-    # "            - 'owner/repo@ref'"  -- a nested uses: of that record
-    if (match($0, /^            - '([^']+)'/, m) && depkey != "") {
+    # Nested uses: may be single-quoted, double-quoted, or plain YAML strings.
+    if (depkey != "" && (match($0, /^            - '([^']+)'/, m) ||
+                        match($0, /^            - "([^"]+)"/, m) ||
+                        match($0, /^            - ([^"'[:space:]][^[:space:]]*)/, m))) {
       r = ck(m[1]); disp[r] = m[1]
       want[r] = 1
       wantsrc[r] = wantsrc[r] " dependencies:" depkey
