@@ -1,8 +1,17 @@
 # SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 # RFC 9116 compliant security.txt
+#
+# This file previously pointed at hyperpolymath/oikos-bot for every field —
+# contact, canonical URL and policy. That repository is a different project
+# (OikosBot left this repo on 2026-05-28; see docs/PALIMPSEST.adoc), so the
+# disclosure route here was wrong: a report sent there never reached the
+# maintainers of the DSL. Corrected to this repository on 2026-10-10, when the
+# root SECURITY.md/SECURITY.adoc pair was consolidated into .github/SECURITY.md.
 
-Contact: https://github.com/hyperpolymath/oikos-bot/security/advisories/new
-Expires: 2026-12-31T23:59:59.000Z
+Contact: mailto:security@hyperpolymath.org
+Contact: https://github.com/hyperpolymath/oikos-economics-accounting-dsl/security/advisories/new
+Expires: 2027-12-31T23:59:59.000Z
 Preferred-Languages: en
-Canonical: https://github.com/hyperpolymath/oikos-bot/.well-known/security.txt
-Policy: https://github.com/hyperpolymath/oikos-bot/blob/main/SECURITY.md
+Canonical: https://github.com/hyperpolymath/oikos-economics-accounting-dsl/blob/main/.github/SECURITY.md
+Policy: https://github.com/hyperpolymath/oikos-economics-accounting-dsl/blob/main/.github/SECURITY.md

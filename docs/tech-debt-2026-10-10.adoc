@@ -1,0 +1,304 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= Tech-Debt Audit — oikos-economics-accounting-dsl — 2026-10-10
+Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+v1, 2026-10-10
+:toc: macro
+:toclevels: 2
+:icons: font
+
+Regenerated audit. It replaces xref:tech-debt-2026-05-26.adoc[the 2026-05-26
+scan] as the current statement of debt; the older file stays in the tree
+untouched apart from a dated corrections banner, because a measurement is
+evidence about the moment it was taken.
+
+toc::[]
+
+[NOTE]
+====
+*Method.* Every number below was produced on 2026-10-10 in this working tree by
+a command shown in the row, not inferred from the previous audit. Where a
+number could not be produced in the audit environment (no `cargo`, no `nickel`,
+no network to the `gh` extension registry), the row says so and names the
+command to run — an unverifiable claim is recorded as unverified rather than
+repeated. The 2026-05-26 document's failure mode was exactly the opposite: four
+of its rows were probe artefacts (see the corrections table there).
+====
+
+== 1. Proof debt
+
+[cols=",",options="header",]
+|===
+|Field |Value
+|Proof-bearing files (`*.v`, `*.lean`, `*.agda`, `*.idr`, `*.fst`, `*.tla`, `*.ads`) |`0` — `git ls-files` over those extensions
+|`verification/` tree |absent
+|Declared capability |`formal-proofs` *not* declared in `.machine_readable/rsr-profile.a2ml`
+|Severity |`OK` (correctly absent, not missing)
+|===
+
+The absence is consistent: Oikos enforces its invariants *in the type system*
+(Godley column-sum, stock/flow separation, period regions), so the proof is the
+type checker plus `oikos-check`. Consuming Ephapax's linearity discipline is not
+the `formal-proofs` capability (policy: "`formal-proofs` means containing
+mechanised proofs in tree").
+
+*Recommended next move:* none for proof debt. If an accounting-identity lemma is
+ever mechanised (Agda or Lean, in `verification/proofs/`), declare the capability
+in the same commit, or the module reads as vestigial.
+
+== 2. Licence debt
+
+[cols=",",options="header",]
+|===
+|Field |Value
+|`LICENSE` |MPL-2.0 (Mozilla Public License Version 2.0, verbatim)
+|`Cargo.toml` `[workspace.package] license` |`MPL-2.0`
+|`license.workspace = true` in all four crates |yes
+|SPDX headers |`reuse lint` → *compliant with REUSE 3.3*: 138/138 files with licence **and** copyright
+|`LICENSES/` |`MPL-2.0.txt`, `CC-BY-SA-4.0.txt`
+|Docs licence |CC-BY-SA-4.0 (per-file headers + `REUSE.toml` aggregates)
+|Severity |`LOW` — one document contradicts the licence of record
+|===
+
+*Finding (new).* `docs/PALIMPSEST.adoc` states "This project is licensed under
+the *Palimpsest-MPL License 1.0 (PMPL-1.0)*" and instructs the reader to "Include
+the PMPL-1.0 license text in `LICENSE`". Its badge is internally inconsistent too
+— the image URL is `License-MPL--2.0`, the alt text `License: PMPL-1.0`. None of
+this matches the tree: `LICENSE` is MPL-2.0, every source header is MPL-2.0, and
+`Cargo.toml` publishes `MPL-2.0`. The estate migrated EUPL-1.2 → MPL-2.0 on
+2026-05-22 (`docs/DESIGN.adoc` DR-010) and PMPL was never adopted here.
+
+*Recommended next move:* an owner decision, not a cleanup. Either (a) the document
+is describing the licence the project *intends* to adopt, in which case `LICENSE`,
+`Cargo.toml` and 138 headers are wrong and must move together; or (b) the
+document is a retained statement of the palimpsest *philosophy*, in which case it
+must stop asserting the licence in the present tense. Option (b) is a two-line
+edit; option (a) is a relicensing. This audit does not pick, because a licence is
+not a formatting concern. The estate check that would catch it is
+`standards/scripts/check-licence-consistency.sh`, and it is not wired into this
+repository.
+
+*Secondary finding.* `REUSE.toml` shipped nine paths that no longer existed
+(`Mustfile`, `manifest.scm`, `hooks/*.sh`, `ARCHITECTURE.adoc`, `GOVERNANCE.adoc`,
+`MAINTAINERS`, `MAINTAINERS.adoc`, `SECURITY.adoc`, `.well-known/security.txt`)
+and REUSE never complains about an annotation whose target is gone — it simply
+stops licensing anything. Fixed 2026-10-10: `REUSE.toml` is now limited to files
+that cannot carry an in-file header. The reason nobody had noticed is section 6.
+
+== 3. Documentation debt
+
+[cols=",",options="header",]
+|===
+|Field |Value
+|`README.adoc` |202 lines (`wc -l`)
+|`docs/` |14 files, 2618 LoC (`git ls-files docs/` + `wc -l`)
+|`CHANGELOG.adoc` |present — the 2026-05-26 audit's "CHANGELOG.md: N" was a probe artefact; AsciiDoc is the estate format
+|Community health files |`.github/CONTRIBUTING.md`, `.github/SECURITY.md`, `.github/CODE_OF_CONDUCT.md`, `.github/CODEOWNERS`, `.github/FUNDING.yml`, `.github/PULL_REQUEST_TEMPLATE.md`
+|`CITATION.cff` |minted 2026-10-10 (`cff-version: 1.2.0`; `version`/`date-released` deliberately absent while nothing is tagged)
+|Markdown under `docs/` |0 — AsciiDoc-only holds
+|`.a2ml` state files |14 tracked; retired format estate-wide (rsr-template-repo#209), pending the repo deed
+|Severity |`MEDIUM`
+|===
+
+*Finding — one document missing, and it is the one the repo committed to.*
+Declaring `governance-tier` in `.machine_readable/rsr-profile.a2ml` binds the
+`AUDIT`/`AFFIRMATION`/`GOVERNANCE`/`MAINTAINERS` quartet. Three exist
+(`docs/AFFIRMATION.adoc`, `docs/GOVERNANCE.adoc`, `docs/MAINTAINERS.adoc`);
+`docs/AUDIT.adoc` does not. `scripts/check-rsr-profile.sh` reports it:
+`MISSING (governance-tier): docs/AUDIT.adoc|AUDIT.adoc`. This file is *not* that
+audit: an audit is a claim-bearing review of the code, and generating one to
+satisfy a gate inside a directory-layout commit would produce the least
+trustworthy document in the tree.
+
+*Recommended next move:* write `docs/AUDIT.adoc` as a real review of `oikos-check`
+and `oikos-parser` (what the checker proves, what it does not, which README
+claims are backed). Then either drop `governance-tier` from the profile or land
+the file; leaving a declared capability unmet is the state to be in for one
+release, not indefinitely.
+
+*Secondary finding — the repo contradicts itself about being blocked.* Three
+artefacts, three answers:
+
+[cols="1,2",options="header"]
+|===
+| Where | What it says
+
+| `README.adoc` §Status | "desugaring is blocked on the Ephapax parser milestone"
+| `Cargo.toml` `[workspace.dependencies]` comment | "NOT blocked on the Ephapax parser any more: as of 2026-09-26 upstream publishes ephapax-parser/-ir/-typing ... they stay commented out because the lowering is unimplemented and untested"
+| issue https://github.com/hyperpolymath/oikos-economics-accounting-dsl/issues/60[#60] title | still "(blocked on upstream Ephapax)"
+|===
+
+The `Cargo.toml` wording is the checked one (verified against
+`hyperpolymath/ephapax@main` in the #106 commit, which is also what closed
+https://github.com/hyperpolymath/oikos-economics-accounting-dsl/issues/108[#108]
+on 2026-10-10). The README's *Status* section is the sentence a newcomer reads
+first, and it now describes an excuse that has been retired. Fix: README and #60's
+title, in one pass, saying *unimplemented* rather than *blocked*.
+
+== 4. Test debt (added; the 2026-05-26 scan did not measure this)
+
+[cols="1,1,1,1",options="header",]
+|===
+|Crate |`.rs` files |LoC |`#[test]` fn
+|`oikos-syntax` |11 |794 |9
+|`oikos-parser` |5 |1529 |33
+|`oikos-desugar` |2 |111 |*0*
+|`oikos-check` |12 |1600 |29
+|===
+
+Source: `git ls-files <crate>` counted with `wc -l` and `grep -c '#\[test\]'`.
+71 test functions across the workspace; the count is occurrences in source, not a
+`cargo test` run — no cargo in the audit environment, so pass/fail status is
+taken from CI (CI green on `main` at the time of writing).
+
+*Finding.* `oikos-desugar` is 111 lines with zero tests and no `#[cfg(test)]`
+module, and it is the only crate on the "core guarantee" path (README: "A model
+that violates any accounting identity *does not compile*") that has no test at
+all. The lowering itself is
+https://github.com/hyperpolymath/oikos-economics-accounting-dsl/issues/60[#60]
+(open); the *tests* are not tracked separately, so an implementation of #60 that
+lands without them leaves this row exactly as it is. That is the gap this section
+exists to keep visible: a crate with zero tests is not "blocked", it is
+unverifiable.
+
+*No `benches/`* anywhere, while the language claims a compile-time cost. The
+`benchmarks` capability is therefore undeclared — honestly so — but a compiler
+without a benchmark has no basis for its "does not slow you down" silence.
+
+*Recommended next move:* one construct end-to-end under #60 — `Model` →
+Ephapax IR for a single `transfer`, with the test asserting the linear consumption
+rather than the shape of the IR — then a `criterion` bench in `oikos-parser` for
+the Godley-matrix parse.
+
+== 5. Reproducibility / provisioning debt
+
+[cols=",",options="header",]
+|===
+|Field |Value
+|Guix |`build/manifest.scm` — a `specifications->manifest` dev shell (moved from the root on 2026-10-10)
+|`build/guix.scm` (package expression) |absent
+|`reproducible-build` capability |declared *not* held, and `flake.nix` absent (canon: Nix is fallback-only)
+|`mise.toml` |present, and over-provisioned: node, python, go, zig, java, bun, deno, julia-era tooling for a repository whose only source language is Rust
+|`mise.lock` |absent — `mise lock` needs registry access; not fabricated
+|`launcher.sh` |absent — it is a shim over `build/just/provision-modes.sh`, which `provision-set` mints; the bundle is not here
+|Severity |`MEDIUM`
+|===
+
+*Recommended next move:* cut `mise.toml` to this workspace (`rust`, `just`,
+`nickel`, `asciidoctor`/`rustfmt`-adjacent tooling), then run `mise lock` and
+remove the `?` from `?mise.lock` in `.machine_readable/root-allow.txt`. A toolchain
+file listing nine runtimes the repository cannot build with is not flexibility, it
+is an invitation to add them. Reproducible builds come second: `build/guix.scm`
+would make `reproducible-build` declarable, and the manifest alone does not.
+
+== 6. CI and supply-chain debt (added; this is where the repo's real incidents came from)
+
+[cols=",",options="header",]
+|===
+|Field |Value
+|Workflows |19 in `.github/workflows/`
+|`actions.lock` |19 `workflows:` keys, 27 `dependencies:` records, transitively closed (verified 2026-10-10 with a clause-for-clause re-implementation of `scripts/check-lock-sync.sh`, because the script needs gawk and the audit environment had none)
+|Gates adopted |Lock Sync Gate (#114), Estate Rules: root shape + doc links + Mustfile (this commit)
+|Standards pin |`da2c748a…` (bumped from `6b38eb5` in #114)
+|`reuse lint` job |`ci/.gitlab-ci.yml:reuse` — *and this is the finding below*
+|`cargo-audit` |`.github/workflows/cargo-audit.yml` present
+|Severity |`LOW` on the lockfile, `MEDIUM` on enforcement coverage
+|===
+
+*Finding — a gate that could not run.* The only `reuse lint` invocation in this
+repository is a GitLab job, and the GitLab pipeline could not be created: the
+`trufflehog` job declared `stage: security` while `stages:` listed `lint`, `test`,
+`build`. GitLab rejects that at pipeline creation, so *every* job in that file —
+fmt, clippy, `reuse lint`, unit tests, doc tests, release build — has been dead
+while the file itself looked maintained. Fixed here (stage added) as a side
+effect of moving the file to `ci/`, which is also the RSR-canonical location and
+requires the out-of-band GitLab project setting *CI/CD configuration file* =
+`ci/.gitlab-ci.yml` (see `ci/README.adoc`). Until that setting is applied, the
+repaired pipeline still will not run — the fix is necessary, not sufficient.
+
+*Finding — the same class of failure, one level up.* All four checks in
+`.github/hooks/` (formerly the root `hooks/` directory) were unreferenced by
+anything: no `core.hooksPath`, no pre-commit config, no Justfile recipe, no
+workflow step — the only mentions of them anywhere were a `REUSE.toml` glob and a
+CHANGELOG line. Being unreferenced was the symptom; two of the four were also
+unusable. `validate-codeql.sh`
+exited 1 on a clean tree with *no output at all* — `set -euo pipefail` plus a
+`find | grep | head` probe makes an empty result a fatal status, and a Rust-only
+repository has no `.js` files to find — while `validate-sha-pins.sh` demanded a
+rule this repository deliberately does not follow (it pins by version in the YAML
+and records SHAs in `actions.lock`), producing 27 false alarms. Fixed:
+`.github/hooks/pre-commit` + `install.sh`, and the two broken validators repaired
+or re-pointed at the canonical script.
+
+*Finding — unenforced obligations.* `.machine_readable/contractiles/must/Mustfile.a2ml`
+said "Run with: `must check`" for a `must` binary that does not exist here, and
+six of its checks named root files that had moved. It is now executable
+(`scripts/run-mustfile.sh`, run strictly in CI). The general rule: *an obligation
+file with no runner is documentation pretending to be a gate*.
+
+*Finding — the new gate was itself wrong, and only CI could say so.* The first run of
+`Estate Rules` (2026-10-10, PR #115) went red on `Mustfile obligations hold (strict)`,
+and neither the local run nor any amount of reading predicted which of 22 checks: the
+sandbox has no `gawk`, so `actions-lock-in-sync` skipped there and ran in CI, while
+`signed-commits` did the opposite. Two defects fell out of that difference. First,
+strict mode escalated *every* unevaluated or warning-level failure to a critical one,
+so the contract's own declared-unmet advisory (this repository has no signing key —
+the file says so in its `notes:`) became a hard failure: the gate was reporting the
+state of the runner, not of the repo. Strict mode now escalates a skip *at the check's
+declared severity* only. Second, `check-lock-sync.sh` needs awk's 3-argument `match()`,
+so the gate's verdict silently depended on which awk the image shipped; the workflow
+installs `gawk` explicitly instead. Both defects were invisible from a laptop, and both
+point at the same rule as the dead GitLab pipeline above: a gate is not real until it has
+been observed running where it will be enforced.
+
+*Consequence for future edits:* `.machine_readable/root-allow.txt` counts as an
+exemption ledger to the estate's `Exemption ratchet`, so adding a root entry requires a
+`Ratchet-exception: .machine_readable/root-allow.txt — <why>` line in the commit message
+or PR body. Expect that demand, do not satisfy it by moving entries into comments —
+which would keep the count flat by disarming the check.
+
+*Recommended next move:* wire `standards/scripts/check-licence-consistency.sh`
+(section 2) and `check-rsr-profile.sh` into CI *when* their blockers are closed
+upstream (section 7); a gate added red-by-construction gets disabled within a
+month, which is worse than not adding it.
+
+== 7. Upstream items this audit produced
+
+Filed against the owning repositories from issue #109, each with the local
+workaround deliberately *not* taken:
+
+. `hyperpolymath/standards` — `.machine_readable/template-capability-gates.toml`
+  `[baseline]` is not evaluated by `scripts/check-rsr-profile.sh` (`grep -c
+  baseline` → 0), and its `.well-known/` row predates the estate's `www/.well-known/`
+  migration. Two defects, one root cause: the baseline is prose with no reader.
+. `hyperpolymath/standards` — the `[gates]` row `src/**/*.rs` cannot be satisfied
+  by a cargo *workspace*; it should read `src/**/*.rs|*/src/**/*.rs`.
+. `hyperpolymath/standards` — `0-canon/TEMPLATE-APPLICABILITY-POLICY.adoc` names
+  `0-AI-MANIFEST.a2ml` in the unconditional baseline while the template retires
+  `.a2ml` (rsr-template-repo#209). Repos are caught between the two authorities;
+  this one keeps the file and records the conflict in `root-allow.txt`.
+. `rsr-template-repo` — `?`-vs-required marking for non-package layouts: `src/` is
+  `REQUIRED` in the shipped `root-allow.txt` although the same file marks
+  `?benches/`/`?examples/` as "Cargo-conventional at package root". A workspace
+  repo has to mark `?src/` itself (done here, with the reason).
+
+== Cross-references
+
+* Supersedes: xref:tech-debt-2026-05-26.adoc[docs/tech-debt-2026-05-26.adoc]
+* https://github.com/hyperpolymath/oikos-economics-accounting-dsl/issues/109[#109]
+  (this audit is item 4; items 1–3 are the root-shape and lockfile work)
+* https://github.com/hyperpolymath/oikos-economics-accounting-dsl/issues/60[#60]
+  (the `oikos-desugar` lowering, and the blocked-vs-unimplemented wording)
+* https://github.com/hyperpolymath/oikos-economics-accounting-dsl/issues/108[#108]
+  (closed 2026-10-10: the cleared Ephapax blocker — the basis for section 3's
+  secondary finding)
+* https://github.com/hyperpolymath/oikos-economics-accounting-dsl/issues/59[#59],
+  https://github.com/hyperpolymath/oikos-economics-accounting-dsl/issues/85[#85]
+  (the two other open decisions: alib Route A/B; Creusot verification)
+* Estate audits: `hyperpolymath/standards/docs/audits/`
+
+''''''
+
+🤖 Regenerated 2026-10-10 in-repo (Arena agent session, issue #109 item 4) rather
+than by the estate scan, so that every row is reproducible from the tree it
+describes. Informational — closing the debt is owned by the maintainer.

@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 #
 # Classify one issue title against the estate label taxonomy.
 #

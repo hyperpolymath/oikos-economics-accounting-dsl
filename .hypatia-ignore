@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# .hypatia-ignore — scoped, documented exemptions for the Hypatia scanner.
+#
+# Format (one entry per line):
+#     <rule_module>/<rule_type>:<path-fragment>
+#     <rule_module>/*:<path-fragment>          (any type in module)
+#     <path-fragment>                           (any rule, any module)
+#
+# Lines starting with `#` are comments. A path-fragment is a substring match
+# against the repo-relative file path. Hypatia's built-in defaults live in
+# hypatia's lib/hypatia/scanner_suppression.ex — do not duplicate them here.
+# Prefer fixing the code, or an inline directive at the finding, over an entry
+# in this file: this file is for whole-path exemptions only, and every entry
+# must carry a stated reason.
+#
+# NO ENTRIES.
+#
+# This repository carries no exemptions because `.github/workflows/hypatia-scan.yml`
+# (standards' `hypatia-scan-reusable.yml`) is green without them. The file exists
+# so that the scanner's configured path is present and reviewable — a future
+# exemption has to be added here, in a diff, rather than by disabling a job.
+#
+# History: rsr-template-repo's copy of this file carries a long SD022 exemption
+# for `build/docs-seed/`, whose example paths describe a hypothetical generated
+# project rather than the template itself. This repo has no docs-seed tree, so
+# inheriting that exemption would suppress findings for directories that do not
+# exist here — an allowlist entry whose only effect is to widen the blind spot.
+# If `build/docs-seed/` is ever adopted, re-evaluate the exemption at that point
+# instead of pre-approving it.

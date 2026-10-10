@@ -1,5 +1,6 @@
 # This workflow is managed by gh actions-lock.
 # SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 # This workflow is managed by gh actions-lock.
 # Prevention workflow - validates all workflows have proper security config
 name: Workflow Security Linter
@@ -33,13 +34,13 @@ jobs:
           for f in .github/workflows/*.yml .github/workflows/*.yaml; do
             [ -f "$f" ] || continue
             if ! awk '/^---[[:space:]]*$/ { next } /^#/ { print; next } { exit }' "$f" \
-                 | grep -q "^# SPDX-License-Identifier:"; then
-              echo "ERROR: $f has no SPDX-License-Identifier in its header comment block"
+                 | grep -q "^# SPDX-License[-]Identifier:"; then
+              echo "ERROR: $f has no SPDX licence identifier in its header comment block"
               failed=1
             fi
           done
           if [ $failed -eq 1 ]; then
-            echo "Add '# SPDX-License-Identifier: MPL-2.0' to the leading comment block"
+            echo "Add the MPL-2.0 SPDX licence identifier to the leading comment block"
             exit 1
           fi
           echo "All workflows have SPDX headers"

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # check-lock-sync.sh — verify .github/workflows/actions.lock is in sync with the
 # workflow YAML, in BOTH directions (including job-level reusable-workflow refs),

@@ -1,0 +1,164 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# rsr-profile.a2ml — this repository's capability declaration.
+#
+#   Policy:  hyperpolymath/standards 0-canon/TEMPLATE-APPLICABILITY-POLICY.adoc
+#   Law:     hyperpolymath/standards .machine_readable/template-capability-gates.toml
+#   Checker: hyperpolymath/standards scripts/check-rsr-profile.sh
+#
+# WHY THIS FILE EXISTS IN A ROOT-SHAPE COMMIT. rsr-template-repo's allowlist is
+# one shape for every repo, which is why this repository looked
+# non-conformant at 37 root entries: the template's maximum includes FFI seams,
+# proof trees and container scaffolding that a Rust DSL workspace has no use
+# for. The capability model is the mechanism that turns "align to the template"
+# into a RULE instead of a copy operation, so the allowlist in
+# .machine_readable/root-allow.txt cites this file as the reason each optional
+# entry is optional. Without the declaration, an allowlist deviation is just a
+# preference; with it, the deviation is derived and checkable.
+#
+# Dialect: a2ml record syntax, matching the shape check-rsr-profile.sh parses.
+# `.a2ml` is retired estate-wide in favour of repo-deed clauses; this file is
+# authored in the superseded dialect because the CHECKER reads that dialect, not
+# because the format is current (standards authors its own profile the same way,
+# and its docs/AUDIT.adoc F3 records the same discomfort).
+
+[rsr-profile]
+version          = "1.0.0"
+spec             = "rsr-criteria-v2"
+declares-against = "2.1.0"
+
+# No `role` key. check-rsr-profile.sh understands exactly two roles — `spine`
+# (a template may carry modules for the repos minted from it) and `canon` (the
+# standards repo may carry modules that DEFINE the capabilities rather than
+# instance them). This repo is a normal member: it earns no exemption, and
+# declaring a role it does not have ("member") produced `WARNING: unknown role`,
+# which is the same class of noise #109 is about.
+
+# ---------------------------------------------------------------------------
+# WHAT THIS REPOSITORY ACTUALLY IS — honest, minimal, and the set that makes
+# the root allowlist's '?' markers derivable rather than discretionary.
+# ---------------------------------------------------------------------------
+capabilities = [
+  "rust",            # four workspace crates; Cargo.toml + Cargo.lock are therefore
+                     # TOOL-required at this root, which is why they are allowlisted
+                     # as required entries rather than as drift
+  "docs-site",       # .github/workflows/casket-pages.yml + pages.yml publish a site;
+                     # `www/` and the site build inputs are therefore not vestigial
+  "governance-tier", # docs/{AFFIRMATION,GOVERNANCE,MAINTAINERS}.adoc are present, so
+                     # the AUDIT/AFFIRMATION/GOVERNANCE/MAINTAINERS trio must be
+                     # DECLARED: an undeclared-but-present governance module is
+                     # VESTIGIAL drift under the gate table, and moving them from the
+                     # root into docs/ without declaring the capability would have
+                     # traded one finding for another
+]
+
+[notes]
+# Capabilities deliberately NOT declared, each grounded in the absence of an
+# artefact in this tree. This is the block that keeps the shape claim honest:
+# a module is absent because nothing here needs it, not because a gate is
+# inconvenient.
+omitted-rationale = "Oikos is a pre-1.0 language workspace: four Rust crates, a specification, and no shipped runtime."
+
+#   cli / published-package
+#       — no binary crate and no crates.io publication. Cargo.toml declares
+#         libraries only; declaring `cli` would demand `.github/workflows/
+#         release.yml` + registry metadata that nothing here consumes.
+#   library
+#       — the crates ARE libraries, but the gate table maps no module to
+#         `library`, so declaring it would assert nothing. Left out rather than
+#         declared for appearances.
+#   reproducible-build
+#       — DELIBERATE, and a live disagreement worth naming. The gate table's row
+#         is `guix.scm|build/guix.scm|flake.nix`. This repo has
+#         `build/manifest.scm` — a `specifications->manifest` dev shell, not a
+#         package expression, so nothing here is reproducible-build in the sense
+#         the row means. Declaring the capability would post a MISSING for a file
+#         that must not be faked; the honest options are to add a real
+#         build/guix.scm (a packaging task, not a shape task) or to have the
+#         gate table learn `build/manifest.scm`. Both are follow-ups; neither is
+#         done by editing this line.
+#   container
+#       — no Containerfile, no image, nothing in build/container/.
+#   formal-proofs / abi / ffi
+#       — no `verification/proofs/`, no Idris2 ABI spec, no C-ABI seam. Oikos
+#         ENFORCES linearity through Ephapax at compile time; consuming a prover
+#         is explicitly not this capability (policy §"Verification").
+#   api-service
+#       — no daemon. `oikos-check` is a library entry point, not a service.
+#   benchmarks
+#       — no `benches/` in any crate. (Tracked as debt: a language with a
+#         compile-time invariant owes a parse/check benchmark; see
+#         docs/tech-debt-2026-10-10.adoc.)
+#   affinescript
+#       — OikosBot's AffineScript port lives in hyperpolymath/oikosbot as of the
+#         2026-05-28 extraction (oikos#41). Nothing here is AffineScript, and
+#         CLAUDE.md still carries the pre-extraction bot guidance in corrected
+#         form so an agent does not "restore" it.
+#   mobile / web-ui / plugin / deno / zig / idris2 / agda / haskell / gleam /
+#   elixir / julia / ocaml / bash
+#       — no corresponding source, config, or manifest anywhere in the tree.
+
+# ---------------------------------------------------------------------------
+# KNOWN DISAGREEMENTS with the checker, recorded rather than worked around.
+# ---------------------------------------------------------------------------
+# `scripts/check-rsr-profile.sh .` (standards, run 2026-10-10) reports three
+# MISSING rows for this tree. All three were checked against the tree before
+# being recorded, and none is fixed by editing this file:
+
+#   MISSING (rust): src/**/*.rs
+#       — the row assumes a single-package layout. Oikos is a CARGO WORKSPACE, so
+#         the sources are `oikos-*/src/**/*.rs` and there is no root `src/`. The
+#         checker's glob is anchored at the repository root, so it does not see
+#         per-crate sources and posts MISSING for a tree with 20+ .rs files in it.
+#         The local alternative — creating an empty root `src/` — is exactly the
+#         vestigial-scaffold outcome the capability model exists to prevent.
+#         Fix belongs upstream: `src/**/*.rs|*/src/**/*.rs`.
+#         This row is also why `.machine_readable/root-allow.txt` marks `?src/`.
+#
+#   MISSING (rust): .github/workflows/rust-ci.yml
+#       — this repository's Rust CI is `.github/workflows/ci.yml` (job
+#         "Rust Workspace"), which predates the template module name and does the
+#         same work: fmt, clippy `-D warnings`, `cargo test --workspace --locked`.
+#         Renaming it would move a required status-check name and the
+#         `.github/workflows/actions.lock` key for that file for a purely
+#         cosmetic gain, i.e. it is a rename PR, not a shape PR.
+#
+#   MISSING (governance-tier): docs/AUDIT.adoc|AUDIT.adoc
+#       — REAL, and the one this repository actually owes. Declaring
+#         `governance-tier` commits to the AUDIT/AFFIRMATION/GOVERNANCE/MAINTAINERS
+#         trio; three of the four exist (docs/AFFIRMATION.adoc,
+#         docs/GOVERNANCE.adoc, docs/MAINTAINERS.adoc) and the audit does not.
+#         Not fabricated here: an audit written to satisfy a gate, in a commit
+#         about directory layout, would be the least trustworthy document in the
+#         tree. Tracked in docs/tech-debt-2026-10-10.adoc and as the follow-up
+#         issue filed from #109.
+#
+#
+# and one observation about the checker itself, recorded because it changes what
+# "conforms" means:
+#
+#   check-rsr-profile.sh does NOT evaluate the gate table's [baseline] section.
+#   Read it: `grep -c baseline scripts/check-rsr-profile.sh` returns 0 — the
+#   script walks [gates] against declared capabilities, and nothing else. So the
+#   universal-baseline rows ("every repo carries these") are asserted by no
+#   executable, which is why `[baseline].paths` still names a root `.well-known/`
+#   two migrations after the estate moved those documents to `www/.well-known/`
+#   (rsr-template-repo issue #53, scripts/migrate-wellknown-to-www.sh; the live
+#   checker for that convention is the template's scripts/validate-template.sh,
+#   which knows the www/ form). This repo carries `www/.well-known/security.txt`
+#   and is therefore conformant to the estate's CURRENT convention and
+#   non-conformant to a stale row that nothing reads.
+#
+#   Recorded instead of "fixed" here, because the tempting local fix — a root
+#   `.well-known/` directory, or a symlink to `www/.well-known/` — would be
+#   scaffolding added to satisfy a document rather than a consumer, and would
+#   then itself need an entry in root-allow.txt. The upstream fix is one line in
+#   `[baseline].paths` (`.well-known/|www/.well-known/`), the same alternation
+#   the SECURITY.md/CONTRIBUTING.md rows already use, plus wiring [baseline] into
+#   the checker so the baseline stops being an unenforced wish list. Both are
+#   filed from issue #109.
+#
+# Until then this profile is the declaration of record and the *shape* gate is
+# check-root-shape.sh, which reads root-allow.txt — the file this repo controls.
+#

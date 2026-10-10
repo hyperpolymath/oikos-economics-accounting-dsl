@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+# Code-hygiene gate allowlist (consumed by cicd-suite actions/code-hygiene-check).
+# Patterns are git pathspec excludes, applied to both the debt-marker scan and
+# the proof-circumvention scan.
+#
+# EMPTY ON PURPOSE, and that emptiness is a claim, not a stub.
+#
+# rsr-template-repo ships two entries here (`build/container/entrypoint.sh`,
+# `tests/e2e.sh`) because it carries two scaffold files whose TODOs are
+# instantiation seams rather than debt. This repository carries neither file,
+# so there is nothing to exempt, and inventing an entry to match the template
+# would suppress the scan for a path that has no findings yet.
+#
+# Adding a line here requires, per the template's own rule:
+#   1. a path that actually exists in this repo;
+#   2. a stated reason naming why the marker is not debt (scaffold seam,
+#      generated file, or third-party code);
+#   3. no widening of an existing entry to cover new ground.
+# Real debt gets an issue link or is fixed. If this repo later owns genuine
+# debt in a scanned path, resolve or issue-link it there — do not widen this
+# list.
