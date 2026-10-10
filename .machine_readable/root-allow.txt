@@ -1,0 +1,176 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+# Canonical root allowlist for oikos-economics-accounting-dsl.
+#
+# Lists every entry permitted at the repository root. The check is
+# BIDIRECTIONAL (see scripts/check-root-shape.sh, adopted verbatim from
+# hyperpolymath/rsr-template-repo):
+#   * anything at root that is not listed here is drift, and fails;
+#   * anything listed here WITHOUT the '?' marker must exist, and its
+#     absence fails.
+#
+# Provenance: this file is rsr-template-repo's `.machine_readable/root-allow.txt`
+# aligned per RULING D186 (2026-09-30, on issue #109): "Align to the
+# rsr-template-repo allowlist and remove the SECURITY/MAINTAINERS duplicates."
+# Every deviation from the template's copy is marked below and carries a
+# reason. Three kinds of deviation are admitted, and only these three:
+#
+#   MOVED     — the entry's canon home is a subdirectory, so this repo moved
+#               the file rather than allowlisting it (`.gitlab-ci.yml` ->
+#               `ci/`, `manifest.scm` -> `build/`, `hooks/` -> `.github/hooks/`,
+#               root prose -> `docs/`).
+#   TOOL      — a tool in this repo's toolchain reads the path from the root
+#               and nowhere else (cargo, `reuse`, git). The entry is REQUIRED
+#               because the tool is load-bearing here.
+#   ABSENT-ON-RECORD — the template requires an entry this repo does not carry
+#               and cannot honestly mint yet. It is marked '?' with the reason
+#               and the blocking condition, never '?' merely to silence the
+#               gate. Each such line names what has to happen for the '?' to
+#               come off.
+#
+# The '?' marker's contract, inherited from the template and not relaxed here:
+# mark an entry optional ONLY for template-only material removed at mint, for
+# a module gated on a capability this repo does not declare (see
+# .machine_readable/rsr-profile.a2ml and standards'
+# template-capability-gates.toml), or for a debt with a stated unblocking
+# condition. A one-directional allowlist only ever ratchets open; a
+# '?' without a reason is the same failure in a different costume.
+#
+# Format
+#   one entry per line; '#' starts a comment; trailing '/' marks a directory
+#   '?' prefix -> OPTIONAL: permitted, but not required to exist
+#
+# ⚠ THIS FILE IS ALSO AN EXEMPTION LEDGER to hyperpolymath/standards'
+# governance-reusable `Exemption ratchet`, which counts its non-comment lines and
+# fails any pull request that grows the count without saying so. The entries below
+# are therefore not free to add: a PR that adds one must carry, in a commit message
+# or the PR body, a line of the form
+#
+#     Ratchet-exception: .machine_readable/root-allow.txt — <why this entry is owed>
+#
+# That is the mechanism the ratchet offers, and it is the one to use: renaming or
+# reformatting this file to dodge the count (prose instead of entries, entries as
+# comments) would silence the only instrument that notices a root entry being
+# excused rather than minted. Issue #109 item 1 grew this ledger 0 -> 61 by
+# ADOPTING the gate, and declared it rather than editing the file to fit.
+
+# ─── Baseline: every RSR repo has these ──────────────────────────────────────
+README.adoc
+LICENSE
+LICENSES/                    # REUSE licence texts (MPL-2.0 code / CC-BY-SA-4.0 docs)
+CHANGELOG.adoc               # AsciiDoc is the estate-standard documentation format
+CITATION.cff                 # citation metadata; GitHub reads it from the root of the default branch only
+CLAUDE.md                    # MOVED: was .claude/CLAUDE.md. The generator, pre-commit and Claude Code all read it from the ROOT; issue #109 item 1 named this explicitly. `/.claude/` is now git-ignored for the tool's own scratch state.
+?GEMINI.md                   # pointer to CLAUDE.md while no AGENTS.md exists (optional upstream, present here)
+Justfile                     # thin; `just --list` is the entry point
+?launcher.sh                 # ABSENT-ON-RECORD: in the template the launcher is a 30-line shim over build/just/provision-modes.sh, minted by `provision-set`. This repo has no provisioning bundle, so copying the shim alone would ship a script whose first action is "this checkout is incomplete". Lands with the bundle.
+coordination.k9.ncl           # repo-local session binding (template-mandated)
+
+# ─── Conventional dotfiles (tool-required at root) ───────────────────────────
+.editorconfig
+.envrc                       # direnv; loads mise and `build/manifest.scm` when present
+.gitattributes
+.gitignore
+.gitleaksignore              # exact fingerprints for reviewed historical false positives.
+                             # '?' because the location is mid-flight: gitleaks reads
+                             # this name from the worktree root, while branch
+                             # arena/fd4b224f relocates it to
+                             # .machine_readable/.gitleaksignore. Both spellings are
+                             # permitted and neither is required, so this gate does not
+                             # decide the outcome of that move.
+.cicd-hygiene-allow          # code-hygiene gate allowlist; empty here is a real state,
+                             # not a stub: the template's two entries name its own
+                             # scaffolds (build/container/entrypoint.sh, tests/e2e.sh),
+                             # which this repo does not carry.
+.gitmessage                  # commit template; wired by .github/hooks/install.sh (git config commit.template)
+.mailmap                     # git reads .mailmap from the worktree root only
+mise.toml                    # the toolchain declaration; mise reads it from the root
+?mise.lock                   # ABSENT-ON-RECORD: generated by `mise lock`, which needs registry access; also waits for mise.toml to be curated to this workspace (it is still the estate-wide "everything at latest" list). Generate it, then remove the '?'.
+.hypatia-ignore              # the Hypatia scanner reads it from the repo root
+?.coderabbit.yaml            # only where the rulesets require the CodeRabbit context
+.clinerules                  # AI editor rules: Cline/Cursor/Windsurf read these from
+.cursorrules                 # the project root, which is why the copies formerly under
+.windsurfrules               # .machine_readable/ai/ were inert
+?.claude/                    # Claude Code project state (checkpoints, history); git-ignored
+
+# ─── Directories ─────────────────────────────────────────────────────────────
+.git/
+.github/                     # community health files + workflows + versioned git hooks
+                             # (.github/hooks/, wired via core.hooksPath) — MOVED: the
+                             # root `hooks/` directory held four validators that nothing
+                             # installed; they are now `.github/hooks/` with a pre-commit
+                             # dispatcher and install.sh, per template canon.
+www/                         # site-operations bundle; .well-known/ lives at www/.well-known/
+.machine_readable/           # manifests, contractiles, policies, root allowlist
+docs/                        # human documentation. MOVED into here: AFFIRMATION.adoc,
+                             # ARCHITECTURE.adoc, EXPLAINME.adoc, GOVERNANCE.adoc,
+                             # MAINTAINERS.adoc, PALIMPSEST.adoc, SPEC.adoc (from spec/),
+                             # and the root ROADMAP.adoc pointer was deleted outright —
+                             # docs/ROADMAP.adoc is the journal. The gate table accepts
+                             # `docs/EXPLAINME.adoc` and `docs/MAINTAINERS.adoc` as
+                             # alternatives to the root forms, so the moves satisfy
+                             # canon rather than merely dodging the shape check.
+build/                       # build orchestration (guix manifest). NOT to be confused with
+                             # build output, which is `target/`; .gitignore says so.
+ci/                          # .gitlab-ci.yml (+ ci/README.adoc recording the out-of-band
+                             # GitLab project setting the relocation requires)
+scripts/                     # repo helper scripts (check-root-shape.sh, check-lock-sync.sh)
+session/                     # dispatch.sh, custom-checks.k9.ncl, local-hooks.sh
+?src/                        # Rust workspace: cargo resolves each crate's sources under
+                             # oikos-*/src/, so a root src/ would be an empty directory
+                             # that misrepresents the build. Gated off by the workspace
+                             # layout, not by preference.
+tests/                       # repo-level (non-crate) checks: tests/shape/ holds the
+                             # self-tests that prove the shape gates can FAIL
+
+# ─── Optional: capability-gated or template-only ─────────────────────────────
+?archetypes/                 # template-only variation seam (ADR-0003); removed at mint
+?.devcontainer/              # only where the container capability is declared
+?sonar-project.properties    # only where the repo is analysed by SonarCloud
+?benches/                    # Cargo-conventional at PACKAGE root: here that is oikos-parser/benches/, not this root
+?examples/                   # same reasoning as benches/
+?features/                   # optional feature packs
+?verification/               # proofs; this repo declares no formal-proofs capability
+?CONTRIBUTING.md             # accepted at root OR .github/; .github/ is canonical and used here
+?CONTRIBUTING.adoc           # the root copy the estate docs gate verifies; absent because
+                             # standards' check-docs-presence.sh resolves .github/ too
+?SECURITY.md                 # accepted at root OR .github/. MOVED here deliberately: root
+?SECURITY.adoc               # SECURITY.md (a pointer) and SECURITY.adoc (the body, which
+                             # described SustainaBot, not Oikos) were consolidated into
+                             # .github/SECURITY.md per ruling D186. A root copy is
+                             # permitted, never required.
+?CODE_OF_CONDUCT.md          # likewise: the root .adoc became .github/CODE_OF_CONDUCT.md
+?REQUIRES_INITIALISATION.md  # written by the minting process, removed once `just repo-init` runs
+?Project.toml                # julia-library archetype: not this repo
+?test/                       # julia-library archetype path: rust uses tests/
+?oikos-economics-accounting-dsl_chora.deed
+                             # ABSENT-ON-RECORD: the repo deed is the estate's universal AI
+                             # entry point (standards#837) and it is GENERATED by the deed
+                             # tooling, which also retires `.a2ml` state files
+                             # (rsr-template-repo#209). This repo's AI facts are still
+                             # 0-AI-MANIFEST.a2ml + CLAUDE.md + the .machine_readable/
+                             # descriptiles. Minting a hand-written 68 KB deed would be
+                             # fabrication, so the entry is optional until the generator
+                             # runs here; follow-up: issue #109 note / the a2ml-retirement
+                             # migration.
+
+# ─── Repo-specific: required by a tool at this root (TOOL) ───────────────────
+Cargo.toml                   # cargo: the workspace manifest is read from the workspace root only
+Cargo.lock                   # cargo: written beside the manifest; the GitLab cache key and
+                             # `--locked` CI builds both address it by that path
+0-AI-MANIFEST.a2ml           # TOOL/baseline: the standards gate table lists this in the
+                             # UNCONDITIONAL baseline
+                             # (.machine_readable/template-capability-gates.toml ->
+                             # [baseline].paths) with no alternative path, so moving it into
+                             # .machine_readable/ would read as MISSING to
+                             # scripts/check-rsr-profile.sh. It retires in the same commit
+                             # that the deed above arrives — not before, or the two
+                             # authorities both go red.
+REUSE.toml                   # `reuse lint` (in ci/.gitlab-ci.yml and the REUSE gate) reads
+                             # REUSE.toml from the top level only; without it the .adoc and
+                             # data files, which carry no machine-parsable header, are
+                             # reported unlicensed
+oikos-syntax/                # workspace member crate (Cargo.toml [workspace].members)
+oikos-parser/                # workspace member crate
+oikos-desugar/               # workspace member crate
+oikos-check/                 # workspace member crate

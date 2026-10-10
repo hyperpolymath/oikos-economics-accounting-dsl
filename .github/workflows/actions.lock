@@ -23,6 +23,7 @@ workflows:
         - 'github/codeql-action@v4.38.0'
     '.github/workflows/dependabot-automerge.yml':
         - 'dependabot/fetch-metadata@v3.1.0'
+    '.github/workflows/estate-rules.yml': []
     '.github/workflows/governance.yml':
         - 'hyperpolymath/standards@da2c748aad55c1a1dcba00b60fe4a35017bc6540'
     '.github/workflows/hypatia-scan.yml':

@@ -1,18 +1,28 @@
 # SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
 # STATE.a2ml — Oikos project state
 [metadata]
 project = "oikos"
 version = "0.1.0-dev"
-last-updated = "2026-05-28"
+last-updated = "2026-10-10"
 status = "active"
-session = "2026-05-28 Phase 5 scaffold + legacy shutoff; upstream RSR rewires landed in affinescript"
+session = "2026-10-10 issue #109 root-shape + lockfile conformance (items 1-4)"
 
 [project-context]
 name = "Oikos"
-purpose = "Two products: (1) the Oikos DSL — typed compiler for stock-flow-consistent macroeconomic models; (2) OikosBot — code-analysis GitHub App. See docs/disambiguation/oikos-dsl-vs-oikosbot.adoc."
+# Single product, as of the 2026-05-28 extraction. The previous `purpose` line
+# said "Two products: (1) the Oikos DSL ...; (2) OikosBot — code-analysis GitHub
+# App. See docs/disambiguation/oikos-dsl-vs-oikosbot.adoc." Both halves were wrong
+# by 2026-10-10: OikosBot lives in hyperpolymath/oikosbot (oikos#41 removed the
+# in-repo `bot-integration/` and `bot-integration-affine/` trees), and the
+# disambiguation document it pointed at has never existed in this repository. A
+# descriptile is what an agent reads FIRST, so an index into a nonexistent file
+# is worse than no index at all — it looks authoritative.
+purpose = "The Oikos DSL — typed compiler for stock-flow-consistent macroeconomic models, desugaring into Ephapax. OikosBot is a separate repository (hyperpolymath/oikosbot)."
 completion-percentage = 30
+
 
 [position]
 phase = "implementation"   # design | implementation | testing | maintenance | archived
@@ -20,25 +30,41 @@ maturity = "alpha"  # experimental | alpha | beta | production | lts
 
 [route-to-mvp]
 milestones = [
-  { id = "phase-5-scaffold", status = "landed", pr = 35, summary = "OikosBot AffineScript scaffold at bot-integration-affine/" },
+  { id = "phase-5-scaffold", status = "landed-then-extracted", pr = 35, summary = "OikosBot AffineScript scaffold at bot-integration-affine/ — the bot, and that tree, now live in hyperpolymath/oikosbot. Recorded so this history is not read as work owed here" },
   { id = "legacy-shutoff", status = "landed", pr = 41, summary = "Clean shutoff of ReScript bot-integration/ (-33,061 lines)" },
-  { id = "stdlib-json-v03", status = "landed-upstream", repo = "affinescript", pr = 421, summary = "stdlib/json.affine RSR rewire to hpm-json-rsr Zig FFI — unblocks OikosBot webhook payload extraction" },
-  { id = "stdlib-http-server", status = "landed-upstream", repo = "affinescript", pr = 425, summary = "stdlib/Http.affine RSR rewire — surfaces hpm-http-rsr Zig FFI server externs — unblocks OikosBot accept loop" },
-  { id = "bot-affine-implementation", status = "pending", summary = "Implement webhook handler + HMAC verification + dispatch in bot-integration-affine/ now that both stdlib gates are closed" },
-  { id = "dsl-v0.3-parser", status = "blocked", blocked-on = "ephapax", summary = "Oikos DSL v0.3 milestone depends on Ephapax parser" }
+  { id = "stdlib-json-v03", status = "landed-upstream", repo = "affinescript", pr = 421, summary = "stdlib/json.affine RSR rewire — served OikosBot, not the DSL; no longer a dependency of this repository" },
+  { id = "stdlib-http-server", status = "landed-upstream", repo = "affinescript", pr = 425, summary = "stdlib/Http.affine RSR rewire — as above" },
+  { id = "dsl-syntax", status = "landed", summary = "oikos-syntax: stocks/flows/sectors/Godley matrix/instrument typestate; 794 LoC, 9 tests" },
+  { id = "dsl-parser", status = "landed-partial", summary = "oikos-parser: logos + chumsky over the docs/SPEC.adoc grammar; 1529 LoC, 33 tests. The BNF itself is still marked draft" },
+  { id = "dsl-pre-desugar-checks", status = "landed", summary = "oikos-check: Godley column-sum + typestate reachability before lowering; 1600 LoC, 29 tests — the half of the core guarantee that is checkable today" },
+  { id = "dsl-desugar", status = "open", issue = 60, summary = "oikos-desugar: 111 LoC, ZERO tests. NOT blocked — the Ephapax parser milestone shipped (issue 108, closed 2026-10-10) — it is unimplemented" },
+  { id = "root-shape-conformance", status = "landed", issue = 109, summary = "Root allowlist + bidirectional gate + Estate Rules workflow; actions.lock closed over the standards reusables; standards pin bumped to da2c748a; Lock Sync Gate adopted" }
 ]
+
 
 [blockers-and-issues]
 issues = [
-  { id = "github-actions-budget", severity = "operational", summary = "Required-checks gates BLOCKED on GH Actions budget exhaustion — PRs admin-merged per estate pattern" }
+  { id = "gh-actions-budget", severity = "operational", summary = "Required-checks gates were blocked on GH Actions budget exhaustion (2026-05-28). Re-checked 2026-10-10: CI on main is green across every workflow, so this entry is retained as history, not as an open blocker" },
+  { id = "ephapax-lowering", severity = "engineering", issue = 60, summary = "Desugaring to a linear-typed Ephapax IR is unimplemented and untested; the upstream milestone is no longer the obstacle" },
+  { id = "audit-doc", severity = "governance", summary = "docs/AUDIT.adoc is declared-but-absent: this repo declares governance-tier and carries three of its four documents (docs/tech-debt-2026-10-10.adoc section 3)" }
 ]
+
 
 [critical-next-actions]
 actions = [
-  { id = "bot-affine-webhook-handler", priority = "P1", summary = "Wire the AS-side webhook receiver in bot-integration-affine/ using Http server + Json stdlib externs" },
-  { id = "hpm-json-object-keys", priority = "P2", summary = "Add hpm_json_object_keys export to hpm-json-rsr Zig FFI to close the JObject materialisation gap in stdlib/json.affine to_json" }
+  { id = "desugar-one-construct", priority = "P1", issue = 60, summary = "Lower `transfer A -> B { amount }` to Ephapax IR in oikos-desugar, with a test that asserts the source stock is CONSUMED — that crate's first test" },
+  { id = "spec-grammar-freeze", priority = "P2", summary = "docs/SPEC.adoc's BNF is marked draft; freeze the subset oikos-parser accepts and have the spec point at it" },
+  { id = "alib-route-decision", priority = "P2", issue = 59, summary = "Take the Route A-vs-B decision for the alib aggregate library, then build Route B over MacroState" },
+  { id = "creusot-scope", priority = "P3", issue = 85, summary = "Decide whether Creusot verification of first-party Rust is in scope; if yes, declare formal-proofs in .machine_readable/rsr-profile.a2ml in the same commit that adds verification/proofs/" },
+  { id = "repo-deed", priority = "P3", summary = "Mint oikos-economics-accounting-dsl_chora.deed with the estate generator; that commit retires the .a2ml descriptiles and removes the '?' from the deed entry in .machine_readable/root-allow.txt" }
 ]
 
+
 [maintenance-status]
-last-run-utc = "2026-05-28T11:00:00Z"
-last-result = "pass"  # unknown | pass | warn | fail
+last-run-utc = "2026-10-10T14:30:00Z"
+last-result = "warn"  # unknown | pass | warn | fail
+# warn, precisely: every gate that CAN run passes (Estate Rules — root shape,
+# doc links, Mustfile; Lock Sync Gate; CI fmt/clippy/test --locked; REUSE 3.3
+# compliant), and two things are still owed that a green CI cannot see: an
+# empty test suite in oikos-desugar, and the declared-but-absent docs/AUDIT.adoc.
+last-note = "2026-10-10: issue #109 items 1-4 resolved; see CHANGELOG.adoc"

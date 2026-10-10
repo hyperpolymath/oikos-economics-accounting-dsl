@@ -1,0 +1,176 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+# Mustfile — Physical state contract for oikos-economics-accounting-dsl
+# Author: Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+#
+# What MUST be true about this repository. Hard requirements.
+# Run with: must check
+# Fix with: must fix (where a deterministic fix exists)
+#
+# Location: `.machine_readable/contractiles/must/Mustfile.a2ml` — the path
+# standards' scripts/check-mustfile-structure.sh uses as its default. It sat at
+# `.machine_readable/contractiles/Mustfile.a2ml` before 2026-10-10, where no
+# consumer looks, alongside a second, different `Mustfile` (TOML-shaped,
+# `version: 1` + `checks:`) at the repository root in a format nothing parses.
+# That duplicate was deleted in the same commit as this move: one obligation
+# file, at the path the tooling reads.
+
+@abstract:
+Physical-state invariants for the Oikos economics/accounting DSL workspace:
+four Rust crates plus the repository-shape rules. These are hard requirements;
+CI and the local pre-commit gate fail if any check fails.
+
+Where a rule is already enforced by a script, the check DELEGATES to that script
+instead of restating its contents. Six of the checks this file inherited from
+rsr-template-repo listed root paths by hand, went stale when those paths moved
+(`SECURITY.md`, `GOVERNANCE.adoc`, `MAINTAINERS.adoc`), and — because no
+executable named `must` is wired into this repo's CI — stayed silently wrong.
+Delegating means the file cannot drift from the gate: if the allowlist changes,
+this says so, because it is the same assertion.
+@end
+
+## Repository shape
+
+### root-shape
+- description: The repository root matches .machine_readable/root-allow.txt
+- run: ./scripts/check-root-shape.sh .
+- severity: critical
+- notes: Bidirectional. An unlisted root entry fails; a listed REQUIRED entry that is missing fails; exit 2 (no allowlist) is a setup error, not a pass. Enforced in CI by the "Estate Rules" workflow.
+
+### root-shape-gate-can-fail
+- description: The root-shape gate's self-test passes (the instrument can red)
+- run: ./tests/shape/check_root_shape_test.sh
+- severity: critical
+- notes: A gate that has only ever printed PASS is indistinguishable from a gate that is not wired up. This is the check that keeps that from recurring here.
+
+### security-policy
+- description: A single security policy exists, in the estate's canonical location
+- run: test -f .github/SECURITY.md && test ! -f SECURITY.md && test ! -f SECURITY.adoc
+- severity: critical
+- notes: Issue #109 item 1 / ruling D186 collapsed the root SECURITY.md pointer + root SECURITY.adoc body into one file. The negative assertions keep the duplicate from being re-created.
+
+### code-of-conduct
+- description: A code of conduct exists where GitHub can discover it
+- run: test -f .github/CODE_OF_CONDUCT.md
+- severity: critical
+
+### contributing
+- description: A contribution guide exists where GitHub can discover it
+- run: test -f .github/CONTRIBUTING.md
+- severity: critical
+
+### citation-metadata
+- description: CITATION.cff exists and carries no unsubstituted template placeholders
+- run: test -f CITATION.cff && ! grep -q '{{' CITATION.cff
+- severity: warning
+
+### ai-manifest
+- description: 0-AI-MANIFEST.a2ml must exist at the root
+- run: test -f 0-AI-MANIFEST.a2ml
+- severity: critical
+- notes: Required AT THE ROOT specifically — the standards gate table lists it in the unconditional baseline with no alternative path. It retires in the commit that mints this repo's *_chora.deed, not before.
+
+### no-root-readme-duplication
+- description: Prose lives in docs/, not beside the README
+- run: test ! -f AFFIRMATION.adoc && test ! -f EXPLAINME.adoc && test ! -f GOVERNANCE.adoc && test ! -f MAINTAINERS.adoc && test ! -f PALIMPSEST.adoc && test ! -f ROADMAP.adoc && test ! -f ARCHITECTURE.adoc
+- severity: warning
+- notes: These were root files before 2026-10-10. The assertion is the negative because a re-created root copy is the exact regression this repo keeps suffering (SECURITY.md/SECURITY.adoc, MAINTAINERS/MAINTAINERS.adoc).
+
+### governance-docs
+- description: Governance, maintainers and CODEOWNERS exist
+- run: test -f docs/GOVERNANCE.adoc && test -f docs/MAINTAINERS.adoc && test -f .github/CODEOWNERS
+- severity: critical
+
+### machine-readable-dir
+- description: .machine_readable/ directory must exist, with the allowlist beside it
+- run: test -d .machine_readable && test -f .machine_readable/root-allow.txt
+- severity: critical
+
+## Workflow integrity
+
+### actions-lock-in-sync
+- description: actions.lock covers every uses: ref, owns no orphans, and is transitively closed
+- run: ./scripts/check-lock-sync.sh
+- severity: critical
+- requires: gawk
+- notes: Needs gawk locally (an awk with 3-argument match()); the script exits 1 with an install hint rather than reporting a false pass. This is the check whose absence from CI caused #105 and #112.
+
+### workflows-declare-permissions
+- description: Every workflow declares top-level permissions
+- run: ./.github/hooks/validate-permissions.sh
+- severity: critical
+
+### workflows-carry-spdx
+- description: Every workflow carries an SPDX identifier in its leading comment block
+- run: ./.github/hooks/validate-spdx.sh
+- severity: critical
+- notes: The leading comment BLOCK, not line 1 — `gh actions-lock` prepends its own banner to these files, so a line-1 test re-fails all of them on every lockfile refresh.
+
+### no-dangling-doc-links
+- description: Every relative link in the prose resolves
+- run: ./scripts/check-doc-links.sh .
+- severity: warning
+
+## Rust workspace
+
+### workspace-manifest
+- description: Cargo.toml declares the workspace and the lockfile is committed
+- run: grep -q '^\[workspace\]' Cargo.toml && test -f Cargo.lock && grep -A6 '^\[workspace\]' Cargo.toml | grep -c 'oikos-' | grep -qv '^0$'
+- severity: critical
+- notes: Deliberately toolchain-free. `cargo metadata` is the stronger assertion, but it cannot run on a runner with no cargo, and a shape gate that depends on which images have which SDKs gets disabled rather than fixed. The toolchain checks live in .github/workflows/ci.yml, which builds with --locked.
+
+### no-root-src-directory
+- description: There is no root src/ (source lives in the crates)
+- run: test ! -d src
+- severity: warning
+- notes: The template allowlist requires a root src/; for a workspace it would be an empty directory that misrepresents the build, so root-allow.txt marks it optional with this reason. If a root package is ever added, revisit both.
+
+### build-orchestration-location
+- description: Guix/Nix development manifests live under build/, CI config under ci/
+- run: test -f build/manifest.scm && test ! -f manifest.scm && test -f ci/.gitlab-ci.yml && test ! -f .gitlab-ci.yml
+- severity: warning
+
+## Directory Structure
+
+### contractiles-complete
+- description: Every contractile verb has a file
+- run: test -f .machine_readable/contractiles/Intentfile.a2ml && test -f .machine_readable/contractiles/must/Mustfile.a2ml && test -f .machine_readable/contractiles/Trustfile.a2ml && test -f .machine_readable/contractiles/Adjustfile.a2ml && test -f .machine_readable/contractiles/bust/Bustfile.a2ml && test -f .machine_readable/contractiles/dust/Dustfile.a2ml
+- severity: critical
+
+### descriptiles-directory-present
+- description: descriptiles directory exists with the six required files
+- run: test -d .machine_readable/descriptiles && test -f .machine_readable/descriptiles/META.a2ml && test -f .machine_readable/descriptiles/ECOSYSTEM.a2ml && test -f .machine_readable/descriptiles/STATE.a2ml && test -f .machine_readable/descriptiles/PLAYBOOK.a2ml && test -f .machine_readable/descriptiles/AGENTIC.a2ml && test -f .machine_readable/descriptiles/NEUROSYM.a2ml
+- severity: critical
+
+## State-file discipline
+
+### no-placeholder-values
+- description: No unsubstituted template placeholders remain in the machine-readable tree
+- run: test -z "$(grep -rnE '\{\{[A-Z][A-Z0-9_]\{2,\}\}\}' .machine_readable/ .editorconfig .envrc CITATION.cff README.adoc docs/ 2>/dev/null | grep -vE '^[^:]+:[0-9]+:- (notes|description|corrective|severity|run):')"
+- severity: critical
+- notes: Matched as an ALL-CAPS `{{TOKEN}}`, not as any two braces, and with the
+  contractiles' own prose excluded. Two reasons, both learned the slow way here:
+  `.machine_readable/contractiles/Justfile` legitimately contains just's `{{ msrv }}`
+  interpolation, and Adjustfile/Dustfile *describe* the placeholder convention, so a
+  naive `{{...}}` scan reported this repo's documentation-about-placeholders as
+  placeholders. A check that fires on its own explanation is a check people mute.
+- notes: Inherited from rsr-template-repo, where it guards the mint. It applies here for the same reason: several files in this repo were copied from the template and never instantiated, and a leftover {{...}} is that event made visible.
+
+## Git State
+
+### no-untracked-contractiles
+- description: All contractile files are tracked in git
+- run: test -z "$(git ls-files -o --exclude-standard .machine_readable/contractiles/ 2>/dev/null)"
+- severity: critical
+
+### signed-commits
+- description: All commits must be signed
+- run: git verify-commit HEAD
+- severity: warning
+- requires: gpg
+- notes: UNMET TODAY, and kept in the file anyway. Dropping an obligation because
+  the repository does not satisfy it turns a contract into a description. The
+  estate rule this encodes is `require-signed-commits` (see rsr-template-repo
+  .github/rulesets/); this repo has no ruleset JSON checked in, so nothing
+  enforces it at either end. Closing this needs an owner decision on branch
+  protection plus signed commits going forward — it is not a documentation fix.

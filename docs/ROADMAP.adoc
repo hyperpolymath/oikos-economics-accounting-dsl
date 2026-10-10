@@ -28,7 +28,7 @@ Status legend: `done` | `in-progress` | `blocked` | `planned`
 * [x] Godley column-sum invariant checker (`oikos-check::godley_check`)
 * [x] Instrument typestate reachability checker (`oikos-check::instrument_check`)
 * [x] 57 passing tests across the workspace
-* [x] Language specification (`spec/SPEC.adoc`)
+* [x] Language specification (`docs/SPEC.adoc`)
 * [x] Architectural decision log (`docs/DESIGN.adoc`)
 
 === Remaining for v0.1 exit

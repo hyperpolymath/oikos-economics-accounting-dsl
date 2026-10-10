@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 version: 2
 updates:
   - package-ecosystem: "github-actions"

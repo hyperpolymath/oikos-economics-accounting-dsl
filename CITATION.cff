@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use the Oikos DSL in your work, please cite the software as below."
+type: software
+title: "Oikos: a typed DSL for stock-flow consistent macroeconomic modelling"
+authors:
+  - family-names: "Jewell"
+    given-names: "Jonathan D. A."
+    email: "j.d.a.jewell@open.ac.uk"
+repository-code: "https://github.com/hyperpolymath/oikos-economics-accounting-dsl"
+url: "https://hyperpolymath.github.io/oikos-economics-accounting-dsl/"
+license: MPL-2.0
+# `version` and `date-released` are deliberately absent: the crate versions in
+# Cargo.toml are still `0.1.0-dev` and nothing has been tagged. CFF makes both
+# fields optional; a fabricated `0.1.0 / <today>` pair would assert a release
+# that does not exist. Add them in the release commit that tags v0.1.0.
+keywords:
+  - "stock-flow-consistent"
+  - "macroeconomics"
+  - "domain-specific-language"
+  - "linear-types"
+  - "rust"
+  - "rsr"
+  - "provenance"
+references:
+  - type: software
+    title: "Ephapax: linear types, Tofte-Talpin regions and typestate"
+    authors:
+      - family-names: "Jewell"
+        given-names: "Jonathan D. A."
+    repository-code: "https://github.com/hyperpolymath/ephapax"
+  - type: generic
+    title: "Monetary Economics: An Integrated Approach to Credit, Interest, Incomes and Money"
+    authors:
+      - family-names: "Godley"
+        given-names: "Wynne"
+      - family-names: "Lavoie"
+        given-names: "Marc"
+    year: 2007
+    publisher: "Palgrave Macmillan"

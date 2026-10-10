@@ -45,7 +45,8 @@ The parser and desugaring pass are in progress;
 desugaring is blocked on the Ephapax parser milestone.
 
 See link:docs/DESIGN.adoc[DESIGN.adoc] for the full architectural decision log
-and link:docs/ROADMAP.adoc[ROADMAP.adoc] for the planned milestones.
+and link:docs/ROADMAP.adoc[ROADMAP.adoc] for the planned milestones. The
+evidence-for-claims map is link:docs/EXPLAINME.adoc[docs/EXPLAINME.adoc].
 
 == What Oikos gives you
 
@@ -129,9 +130,22 @@ oikos-economics-accounting-dsl/
 ├── oikos-parser/     # Logos lexer + Chumsky parser → oikos-syntax::Model
 ├── oikos-desugar/    # Desugaring pass → Ephapax IR  (blocked: see below)
 ├── oikos-check/      # Type checker wrapping Ephapax  (blocked: see below)
-├── spec/SPEC.adoc    # Language specification
-└── docs/DESIGN.adoc  # Architectural decision log
+├── docs/             # ALL prose lives here (AsciiDoc; nothing new at the root)
+│   ├── SPEC.adoc     #   Language specification
+│   ├── DESIGN.adoc   #   Architectural decision log
+│   └── EXPLAINME.adoc#   README claims mapped to code
+├── scripts/          # repo gates: check-root-shape.sh, check-lock-sync.sh, ...
+├── tests/shape/      # self-tests proving those gates can fail
+├── build/            # build orchestration (Guix dev-shell manifest)
+├── ci/               # non-GitHub CI (GitLab mirror pipeline)
+└── .machine_readable/# root-allow.txt, contractiles/, descriptiles/
 ----
+
+The root layout is enforced, not conventional:
+`.machine_readable/root-allow.txt` is checked bidirectionally by
+`./scripts/check-root-shape.sh` in CI (Estate Rules). A new file at the root
+needs a justified line there first — and the honest answer is usually a
+subdirectory. `just verify` runs every repo-level gate locally.
 
 === Blocked on Ephapax
 
@@ -180,7 +194,7 @@ See link:docs/DESIGN.adoc[DESIGN.adoc] DR-006, DR-007, DR-008 for rationale and 
 
 == Specification
 
-See link:spec/SPEC.adoc[spec/SPEC.adoc] for:
+See link:docs/SPEC.adoc[docs/SPEC.adoc] for:
 
 * Full BNF grammar (draft)
 * Type system overview with examples for each of the six semantic requirements

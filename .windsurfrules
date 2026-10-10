@@ -1,0 +1,83 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+# Authoritative source: hyperpolymath/standards 3-practice/ (LANGUAGE-POLICY.adoc,
+# AI conventions). This file is the repo-local instantiation: the estate rules
+# plus what is specifically true about oikos-economics-accounting-dsl.
+#
+# Same content in .cursorrules and .windsurfrules — Cline, Cursor and Windsurf
+# each read only their own file, and only from the PROJECT ROOT. Keep the three
+# in step (an earlier generation of this repo kept them under
+# .machine_readable/ai/, where no editor reads them: inert copies).
+
+# STARTUP
+# Read CLAUDE.md (repo root) first; then README.adoc, docs/EXPLAINME.adoc,
+# docs/ROADMAP.adoc. There is no `*_chora.deed` here yet — when the estate
+# generator mints one, it becomes the first read and this line changes.
+
+# REPOSITORY LAYOUT — the root shape is a gate, not a preference
+# The repository root is allowlisted, bidirectionally, by
+# .machine_readable/root-allow.txt and checked by scripts/check-root-shape.sh
+# (CI: "Estate Rules"). A new root file needs a line there, and the line needs
+# a reason; moving the file into docs/, build/, ci/, scripts/ or
+# .machine_readable/ is usually the better answer.
+# Prose documentation lives in docs/ (nothing new at the root). Community
+# health files live in .github/. Versioned git hooks live in .github/hooks/.
+# Run `just check-root-shape` before proposing a commit that touches the root.
+# Rust lives ONLY in the four workspace crates:
+#   oikos-syntax/  AST + phantom types
+#   oikos-parser/  logos lexer + chumsky parser
+#   oikos-desugar/ lowering to Ephapax IR
+#   oikos-check/   type checking via Ephapax
+# There is no root src/ and there must not be one.
+
+# LICENSE
+# All original code: MPL-2.0. Never AGPL-3.0; MPL-2.0 only as platform-required
+# fallback. Documentation: CC-BY-SA-4.0.
+# SPDX header required on every source file; files that cannot carry a header are
+# covered by an explicit REUSE.toml annotation (keep that file in step with any
+# path move, or `reuse lint` fails).
+# Copyright: Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+
+# STATE FILES
+# Do NOT create new .a2ml files. The format is being retired estate-wide in
+# favour of repo-deed clauses (rsr-template-repo#209); the .a2ml files already in
+# .machine_readable/ are the historical record and retire with the deed, not
+# before it. Never "fix" a missing file by adding a root duplicate — this repo
+# paid for that habit twice (SECURITY.md + SECURITY.adoc, MAINTAINERS +
+# MAINTAINERS.adoc).
+
+# CI / SUPPLY CHAIN — read before touching .github/
+# Every `uses:` ref in a workflow must be SHA-pinned AND recorded in
+# .github/workflows/actions.lock, transitively closed. GitHub refuses a run
+# whose refs the lockfile does not record: zero jobs, no log. Dependabot cannot
+# regenerate the lockfile, so a Dependabot workflow bump needs a matching lock
+# refresh in the same change. Regenerate with standards'
+# scripts/update-actions-lock.sh; verify locally with scripts/check-lock-sync.sh
+# (`just check-lock-sync`). Do not hand-edit actions.lock.
+
+# BANNED PATTERNS (Rust)
+# transmute — except at an FFI boundary with a `// SAFETY:` comment.
+# Also avoid: unwrap in library code paths that can see user input, unsafe
+# blocks without a safety comment, assert_total-style totality cheats in
+# dependent-type proofs.
+
+# BANNED LANGUAGES (for NEW files; standards/3-practice/LANGUAGE-POLICY.adoc)
+# Go -> Rust.  Python -> Julia or Rust.  TypeScript/ReScript/Deno -> do not add;
+# JavaScript only via Bun (package.json + bun.lock).
+
+# CONTAINERS
+# Runtime: Podman first. File: Containerfile (never Dockerfile).
+# Base: cgr.dev/chainguard/wolfi-base:latest or cgr.dev/chainguard/static:latest.
+# This repo ships no container today; `?container/` stays off the allowlist
+# until one exists.
+
+# BUILD
+# Use `just` (Justfile) for all tasks: `just --list`. `just all` is fmt + check
+# + build + test; `just verify` is the no-toolchain gate set.
+
+# STYLE
+# Descriptive names. Document all files. AsciiDoc for prose (docs/ holds no .md
+# files). Every claim about what is implemented must be checkable — see
+# docs/AFFIRMATION.adoc for the pattern, and do not restate a claim the tests do
+# not support.

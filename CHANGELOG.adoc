@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2024-2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 == Changelog
 
 All notable changes to `+oikos-economics-accounting-dsl+` will be
@@ -15,6 +17,141 @@ Changelog]; this project aims to follow
 https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 === [Unreleased]
+
+==== Changed
+
+* chore(repo): align the repository root to the `rsr-template-repo` allowlist and
+adopt its shape gate (issue #109 item 1, ruling D186). `.machine_readable/
+root-allow.txt` now records the root shape as law rather than as an accident, and
+`scripts/check-root-shape.sh` (copied verbatim from the template) checks it
+BIDIRECTIONALLY — an unlisted root entry fails, and a listed *required* entry that
+is missing fails. Before this the repo had no allowlist at all, so the checker
+exited 2 (setup error), which is how an unadopted gate reads as conformance for a
+year. `tests/shape/check_root_shape_test.sh` — the template's own "prove the
+instrument can fail" fixture — runs first, and `.github/workflows/estate-rules.yml`
+gates both on every push and PR.
+* Moved, not allowlisted, because canon puts them elsewhere: `.gitlab-ci.yml` →
+`ci/` (+ `ci/README.adoc`, which records the out-of-band GitLab project setting the
+relocation needs), `manifest.scm` → `build/`, root `hooks/` → `.github/hooks/`,
+`spec/SPEC.adoc` → `docs/SPEC.adoc`, and the root prose `AFFIRMATION.adoc`,
+`ARCHITECTURE.adoc`, `EXPLAINME.adoc`, `GOVERNANCE.adoc`, `MAINTAINERS.adoc`,
+`PALIMPSEST.adoc` → `docs/`. `.claude/CLAUDE.md` → root `CLAUDE.md`, where the
+generator, pre-commit and Claude Code all look for it.
+* Removed the duplicated community-health documents (ruling D186): root
+`SECURITY.md` (a pointer) + root `SECURITY.adoc` (a body that described
+*SustainaBot*, not this project) became one `.github/SECURITY.md`; root
+`MAINTAINERS` + root `MAINTAINERS.adoc` became `docs/MAINTAINERS.adoc`;
+`CODE_OF_CONDUCT.adoc` became `.github/CODE_OF_CONDUCT.md`; the root `ROADMAP.adoc`
+pointer was deleted, leaving `docs/ROADMAP.adoc`. `.github/funding.yml` (an inert
+lowercase twin of `.github/FUNDING.yml`) was removed.
+* `Mustfile` (root, a format nothing in the estate parses) was deleted and
+`.machine_readable/contractiles/Mustfile.a2ml` moved to the
+`contractiles/must/` path standards' checker defaults to — with its obligations
+rewritten for this repository. They had been copied verbatim from
+`rsr-template-repo`, so six checks named files that had moved and two demanded
+directories this repo has never had.
+* `REUSE.toml` reduced to the files that cannot carry an in-file SPDX header. The
+previous copy listed nine paths that no longer existed; REUSE does not complain
+about an annotation whose target is gone, it just stops licensing anything, and
+nine stale entries had quietly become nine uncovered files.
+
+==== Added
+
+* `scripts/run-mustfile.sh` + `just mustfile`: executes the `must` contractile,
+strictly in CI (`MUST_STRICT=1`, so a check skipped for a missing tool is a
+failure rather than a pass). The file claimed "Run with: must check" for a `must`
+binary that exists nowhere in the estate's reach, which is how its checks stayed
+stale.
+* `scripts/check-doc-links.sh` + `just check-doc-links`: every relative link in
+the prose must resolve, with a `--self-test` that plants a dangling link and
+requires a FAIL. Relocations are only half a move. `www/.well-known/security.txt`
+had pointed at `hyperpolymath/oikos-bot` — a different project — for every field,
+so a disclosure sent there never reached the DSL's maintainers; corrected.
+* `.github/hooks/pre-commit` + `install.sh`, wiring the four workflow validators to
+`core.hooksPath` (and `.gitmessage` to `commit.template`). Nothing had ever run
+them: `validate-codeql.sh` exited 1 on a clean tree (`set -euo pipefail` plus a
+`find | grep | head` probe makes an empty result fatal) and `validate-sha-pins.sh`
+demanded a rule this repo deliberately does not follow (version pins in YAML, SHAs
+in `actions.lock`), producing 27 false alarms; it is now
+`validate-action-refs.sh`, delegating to `scripts/check-lock-sync.sh`.
+* Minted the tool-required root files this repo was missing, per the template
+allowlist: `.gitmessage`, `.mailmap`, `.envrc`, `CITATION.cff`,
+`.cicd-hygiene-allow`, `.hypatia-ignore`, `.clinerules`, `.cursorrules`,
+`.windsurfrules`, `GEMINI.md`, `coordination.k9.ncl`, `session/`
+(dispatch.sh, custom-checks.k9.ncl, local-hooks.sh).
+* `.machine_readable/rsr-profile.a2ml`: this repository's capability declaration
+(`rust`, `docs-site`, `governance-tier`), which is what makes each `?` in the
+allowlist a derived statement rather than a preference. It also records the three
+`check-rsr-profile.sh` findings this commit does NOT paper over, and why.
+* `just check-root-shape`, `just check-root-shape-self-test`,
+`just check-doc-links`, `just check-doc-links-self-test`, `just check-lock-sync`,
+`just verify`, `just hooks-install`.
+
+==== Fixed
+
+* `ci/.gitlab-ci.yml` declared a `trufflehog` job in `stage: security` while
+`stages:` listed only `lint`/`test`/`build`. GitLab rejects that when *creating*
+the pipeline, so every job in the file — `fmt`, `clippy`, `reuse lint`, unit tests,
+doc tests, release build — had been dead, which is also why the REUSE drift above
+was never reported. The stage list now matches the jobs; note that applying the
+`ci/.gitlab-ci.yml` project setting is still required for the mirror pipeline to
+run at all (see `ci/README.adoc`).
+* `.github/CODEOWNERS` owned `SECURITY.md` (root) and `contractiles/` (never a
+root path here) — two rules pointing at nothing. Now `.github/SECURITY.md`, plus
+explicit ownership of the allowlist and the shape/lock/doc gates.
+* `scripts/run-mustfile.sh` treated every unevaluated check as a critical failure
+under `MUST_STRICT=1`, and its first CI run showed why that is wrong:
+`signed-commits` is recorded in the contractile as *declared-unmet* (this repository
+has no signing key), so a debt the contract had already priced as advisory turned the
+gate red — reporting the state of the runner instead of the state of the repo. Strict
+mode now makes an unevaluated check a violation at its declared severity, and each
+failing check is also emitted as a `::error::` / `::warning::` annotation, because a
+job whose only signal is `exit 1` costs somebody an hour of guessing.
+* `.github/workflows/estate-rules.yml` provides `gawk` before the strict run.
+`actions-lock-in-sync` is critical and `scripts/check-lock-sync.sh` needs awk's
+3-argument `match()`, so an image without it would have failed the gate for an
+ambient reason; the `- requires:` mechanism exists to make that dependency explicit,
+and the CI step now honours it instead of hoping.
+
+==== Documentation
+
+* `docs/tech-debt-2026-10-10.adoc` (issue #109 item 4): a regenerated audit whose
+every row is reproducible from the tree, including four findings the 2026-05-26
+scan could not see (dead GitLab pipeline, dead local hooks, unenforced
+contractiles, `oikos-desugar`'s empty test suite).
+  `docs/tech-debt-2026-05-26.adoc` is kept as the dated snapshot it is, with a
+  corrections banner: four of its rows were probe artefacts — "`CHANGELOG.md`: N"
+  in a repo whose changelog is `CHANGELOG.adoc`, "README lines 190" against 202,
+  "docs/ files 3" against 14, and a licence row still pricing in EUPL-1.2 after the
+  2026-05-22 migration to MPL-2.0.
+* `CLAUDE.md` corrected: it presented OikosBot (`bot-integration-affine/`,
+`analyzers/`) as a product of this repository four months after oikos#41 moved the
+bot to `hyperpolymath/oikosbot`, and told agents to write AffineScript here. Added
+the repository-shape and gate section.
+* `.machine_readable/descriptiles/STATE.a2ml`: `purpose` claimed two products and
+linked `docs/disambiguation/oikos-dsl-vs-oikosbot.adoc`, a file that has never
+existed; every `critical-next-action` pointed at the removed bot tree; and
+`blocked-on = "ephapax"` outlived the milestone (issue #108). Rewritten against
+the tree.
+
+==== Notes
+
+* `actions.lock` gains exactly one line: `'.github/workflows/estate-rules.yml': []`.
+The new workflow carries no `uses:` of its own (it checks out with `git` in a
+`run:` step, like `lock-sync-gate.yml`), but the empty key is still mandatory — a
+workflow file with no entry is refused at startup even with zero refs
+(`scripts/check-lock-sync.sh` clause 4).
+* `mise.lock`, `launcher.sh` and the repo deed are allowlisted as `?` with stated
+reasons, not marked optional to go green: each names the condition that removes
+the `?`.
+* `.machine_readable/root-allow.txt` is also an exemption ledger to the standards'
+`Exemption ratchet`, so *adopting* it moved a count from 0 to 61 and the ratchet
+asked for a declaration. The declaration is in the commit message
+(`Ratchet-exception: .machine_readable/root-allow.txt — …`) rather than dodged by
+prose-ising the entries: the ratchet counts non-comment lines, and rewriting real
+entries as comments would disarm the one instrument that notices a root entry being
+excused instead of minted.
+
 
 ==== Fixed
 

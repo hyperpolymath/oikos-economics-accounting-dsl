@@ -1,0 +1,94 @@
+# SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+#
+# Oikos CI pipeline (GitLab)
+#
+# Stages: lint → test → build → security
+# All jobs run in a Chainguard Rust image (distroless, no shell surprises).
+#
+# LOCATION: this file is at ci/.gitlab-ci.yml, not the repository root, per the
+# RSR root shape (issue #109 item 1 / ruling D186; see ci/README.adoc). GitLab
+# does NOT discover a CI config below the root, so the project setting
+# "CI/CD configuration file" must read `ci/.gitlab-ci.yml` or the mirror stops
+# building pipelines silently. That setting is out-of-band: it cannot be made
+# from this repository, only from GitLab project settings.
+#
+# Note the `!!merge` tags below: they are GitLab's own YAML extension for
+# merging a hidden key's mapping into a job, which plain YAML parsers reject.
+# `yamllint` and GitHub Actions' parser are not the audience for this file.
+
+default:
+  image: cgr.dev/chainguard/rust:latest
+variables:
+  CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+  CARGO_INCREMENTAL: "0" # deterministic builds in CI
+  RUST_BACKTRACE: "1"
+# Cache the Cargo registry and build artefacts across pipelines.
+.cargo-cache: &cargo-cache
+  cache:
+    key:
+      files:
+        - Cargo.lock
+    paths:
+      - .cargo/registry/
+      - .cargo/git/
+      - target/
+stages:
+  - lint
+  - test
+  - build
+  # `security` was declared by the trufflehog job below but missing from this
+  # list, which is a hard pipeline-creation error in GitLab ("job has an
+  # invalid stage"): the pipeline never started. Found while relocating the file
+  # for issue #109 item 1; the stage list now matches the jobs.
+  - security
+# ── Lint stage ────────────────────────────────────────────────────────────────
+fmt:
+  stage: lint
+  script:
+    - cargo fmt --all --check
+  allow_failure: false
+clippy:
+  stage: lint
+  script:
+    - cargo clippy --workspace --all-targets --all-features -- -D warnings
+  !!merge <<: *cargo-cache
+reuse:
+  stage: lint
+  image: fsfe/reuse:latest
+  script:
+    - reuse lint
+  allow_failure: false
+# ── Test stage ────────────────────────────────────────────────────────────────
+unit-tests:
+  stage: test
+  script:
+    - cargo test --workspace --lib
+  !!merge <<: *cargo-cache
+doc-tests:
+  stage: test
+  script:
+    - cargo test --workspace --doc
+  !!merge <<: *cargo-cache
+# ── Build stage ───────────────────────────────────────────────────────────────
+build-release:
+  stage: build
+  script:
+    - cargo build --workspace --release
+  !!merge <<: *cargo-cache
+  artifacts:
+    # Preserve the release binary for downstream jobs if/when a CLI crate exists.
+    paths:
+      - target/release/
+    expire_in: 1 week
+trufflehog:
+  stage: security
+  image: trufflesecurity/trufflehog:latest
+  variables:
+    GIT_STRATEGY: clone
+  script:
+    # `trufflehog git` scans history, so it needs the full clone; the default
+    # fetch depth on a mirror would let a secret in an older commit through.
+    - git fetch --unshallow || true
+    - trufflehog git file://. --only-verified --fail
+  allow_failure: false

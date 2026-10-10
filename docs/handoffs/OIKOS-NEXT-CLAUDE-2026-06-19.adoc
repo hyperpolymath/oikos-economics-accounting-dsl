@@ -12,7 +12,8 @@ self-contained._
 [NOTE]
 ====
 This is a *handoff*, not an affirmation or a roadmap. The dated, signed receipt
-of what was true and checked is `AFFIRMATION.adoc` (repo root); the
+of what was true and checked is `docs/AFFIRMATION.adoc` (root-`AFFIRMATION.adoc`
+before the 2026-10-10 root-shape alignment, issue #109); the
 musts/intends/wishes detail is `docs/status/STATUS-2026-06-19.adoc`; the steering
 vision is `README.adoc`. This file just gets the next session productive fast.
 ====
@@ -27,7 +28,7 @@ toc::[]
 You are picking up work on **Oikos**, a typed DSL whose compiler rejects any
 stock-flow-consistent (SFC) macroeconomic model that violates an accounting
 identity: **"a model that violates an accounting identity does not compile."**
-This is the repo `hyperpolymath/oikos`. Read `AFFIRMATION.adoc`,
+This is the repo `hyperpolymath/oikos`. Read `docs/AFFIRMATION.adoc`,
 `docs/status/STATUS-2026-06-19.adoc`, and `README.adoc` first, then continue.
 
 WHAT OIKOS IS
@@ -122,7 +123,7 @@ FIRST MOVE
 
 == Pointers (for the human handing this over)
 
-* `AFFIRMATION.adoc` — the dated, signed receipt for the green
+* `docs/AFFIRMATION.adoc` — the dated, signed receipt for the green
   `cargo build` / `cargo test` at commit `907e10e`.
 * `docs/status/STATUS-2026-06-19.adoc` — the musts/intends/wishes detail.
 * `docs/alib-aggregate-bridge.adoc` — the alib Route A vs B design note (owner-gated).
