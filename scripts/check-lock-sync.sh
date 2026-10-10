@@ -77,7 +77,10 @@ if [ "${#WORKFLOWS[@]}" -eq 0 ]; then
 fi
 
 read -r -d '' PROG <<'AWK' || true
-# owner/repo[/subpath...]@ref  ->  owner/repo@ref   ("" if not an external ref)
+# Return owner/repo@ref from owner/repo[/subpath...]@ref, preserving case.
+# The final @ separates the ref. Return "" if it is absent, either side is
+# empty, the path starts with ./ or $/, or the path has no slash.
+# Other path and ref contents are not validated.
 function norm(r,   at, path, ref, n, parts) {
   at = 0
   for (n = length(r); n > 0; n--) { if (substr(r, n, 1) == "@") { at = n; break } }
@@ -96,6 +99,7 @@ function norm(r,   at, path, ref, n, parts) {
 # SUCCESS while codeql.yml at the SAME commit was startup_failure. A same-commit
 # control, so the case difference is provably not what kills a run.
 # The REF is NOT folded: git tags and branch names are case-sensitive.
+# With no @, fold the whole input; otherwise preserve the final @ and suffix.
 function ck(r,   at, s) {
   at = 0
   for (s = length(r); s > 0; s--) { if (substr(r, s, 1) == "@") { at = s; break } }
