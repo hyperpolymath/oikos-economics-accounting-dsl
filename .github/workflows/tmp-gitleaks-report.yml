@@ -12,7 +12,8 @@
 name: tmp-gitleaks-report
 
 on:
-  workflow_dispatch:
+  push:
+    branches: ['arena/fd4b224f-oikos-economics-accounting-dsl']
 
 permissions:
   contents: read
