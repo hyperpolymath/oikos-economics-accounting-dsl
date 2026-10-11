@@ -42,13 +42,8 @@ chumsky        = { version = "=1.0.0-alpha.8", default-features = false, feature
 
 # ── Diagnostic reporting ─────────────────────────────────────────────────────
 
-# ── Ephapax IR ────────────────────────────────────────────────────────────────
-# NOT blocked on the Ephapax parser any more: as of 2026-09-26 upstream
-# `hyperpolymath/ephapax@main` publishes ephapax-parser/-lexer/-surface/
-# -syntax/-ir/-typing and records them complete (only the type checker and
-# WASM codegen are still in progress). These stay commented out because they
-# are path dependencies outside this workspace and the lowering in
-# `oikos-desugar` is unimplemented and untested — not because the milestone
-# is missing. See issue #60.
-# ephapax-ir     = { path = "../ephapax/src/ephapax-ir" }
-# ephapax-typing = { path = "../ephapax/src/ephapax-typing" }
+# ── Ephapax IR (parser milestone shipped per oikos-economics-accounting-dsl#60) ───
+# Git dependencies per D113 decision in oikos-economics-accounting-dsl#60 comment 6096480288.
+# Strike-by: 2026-10-17 (default: git dependency).
+ephapax-ir     = { git = "https://github.com/hyperpolymath/ephapax", rev = "08d35e7caebaa337b6606a13b7608bcdcff18ccb" }
+ephapax-typing = { git = "https://github.com/hyperpolymath/ephapax", rev = "08d35e7caebaa337b6606a13b7608bcdcff18ccb" }
