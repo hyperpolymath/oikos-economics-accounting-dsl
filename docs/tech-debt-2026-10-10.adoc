@@ -16,24 +16,32 @@ toc::[]
 
 [NOTE]
 ====
-*Method.* Every number below was produced on 2026-10-10 in this working tree by
-a command shown in the row, not inferred from the previous audit. Where a
-number could not be produced in the audit environment (no `cargo`, no `nickel`,
-no network to the `gh` extension registry), the row says so and names the
-command to run — an unverifiable claim is recorded as unverified rather than
-repeated. The 2026-05-26 document's failure mode was exactly the opposite: four
-of its rows were probe artefacts (see the corrections table there).
+*Method.* Every measured row below reads `measured at <sha>, command: <exact
+line>`, and every such row was re-run before it is cited here. The sha is
+`70422eb` (`70422eb5459d723d307c23917db6ad1f86291f8b`, `main` at the audit
+date); the re-run happened on 2026-10-11 in a clean `git worktree` of that
+commit, because an audit row is a claim about a *tree*, and a claim without a
+sha and an exact command is the trap that made the 2026-05-26 scan stale. Four
+measured rows in the file's first draft failed the re-run and are corrected
+here (README 202→215 lines; `docs/` 14→15 files and 2618→2983 LoC; tracked
+`.a2ml` 14→15; the REUSE row's "138/138" against the true copyright 139/140,
+licence 140/140). Where a number could not be produced in the audit
+environment (no `cargo`, no `nickel`, no `gawk`, no network to the `gh`
+extension registry), the row says so and names the command to run — an
+unverifiable claim is recorded as unverified rather than repeated. The
+2026-05-26 document's failure mode was exactly the opposite: four of its rows
+were probe artefacts (see the corrections table there).
 ====
 
 == 1. Proof debt
 
-[cols=",",options="header",]
+[cols=",,,",options="header",]
 |===
-|Field |Value
-|Proof-bearing files (`*.v`, `*.lean`, `*.agda`, `*.idr`, `*.fst`, `*.tla`, `*.ads`) |`0` — `git ls-files` over those extensions
-|`verification/` tree |absent
-|Declared capability |`formal-proofs` *not* declared in `.machine_readable/rsr-profile.a2ml`
-|Severity |`OK` (correctly absent, not missing)
+|Field |Value |Provenance
+|Proof-bearing files (`*.v`, `*.lean`, `*.agda`, `*.idr`, `*.fst`, `*.tla`, `*.ads`) |`0` |measured at 70422eb, command: `git ls-files \| grep -cE '\.(v\|lean\|agda\|idr\|fst\|tla\|ads)$'`
+|`verification/` tree |absent |measured at 70422eb, command: `git ls-files 'verification/*' \| wc -l` (=0)
+|Declared capability |`formal-proofs` *not* declared in `.machine_readable/rsr-profile.a2ml` |measured at 70422eb, command: `bash /tmp/standards/scripts/check-rsr-profile.sh .` ("effective capabilities: docs-site governance-tier rust")
+|Severity |`OK` (correctly absent, not missing) |judgement, not a measurement
 |===
 
 The absence is consistent: Oikos enforces its invariants *in the type system*
@@ -48,16 +56,16 @@ in the same commit, or the module reads as vestigial.
 
 == 2. Licence debt
 
-[cols=",",options="header",]
+[cols=",,,",options="header",]
 |===
-|Field |Value
-|`LICENSE` |MPL-2.0 (Mozilla Public License Version 2.0, verbatim)
-|`Cargo.toml` `[workspace.package] license` |`MPL-2.0`
-|`license.workspace = true` in all four crates |yes
-|SPDX headers |`reuse lint` → *compliant with REUSE 3.3*: 138/138 files with licence **and** copyright
-|`LICENSES/` |`MPL-2.0.txt`, `CC-BY-SA-4.0.txt`
-|Docs licence |CC-BY-SA-4.0 (per-file headers + `REUSE.toml` aggregates)
-|Severity |`LOW` — one document contradicts the licence of record
+|Field |Value |Provenance
+|`LICENSE` |MPL-2.0 (Mozilla Public License Version 2.0, verbatim) |measured at 70422eb, command: `head -3 LICENSE`
+|`Cargo.toml` `[workspace.package] license` |`MPL-2.0` |measured at 70422eb, command: `grep -n '^license' Cargo.toml` (=line 17)
+|`license.workspace = true` in all four crates |yes |measured at 70422eb, command: `grep -l 'license\.workspace' oikos-*/Cargo.toml \| wc -l` (=4)
+|SPDX headers |`reuse lint` → *NOT compliant with REUSE 3.3*: copyright 139/140, licence 140/140 — the single file missing copyright is `tests/test_lock_sync.py`, which carried its licence line and not its `SPDX-FileCopyrightText`; fixed by the 2026-10-11 enforcement pass that also added the missing GitHub gate |measured at 70422eb, command: `reuse lint` (summary lines "Files with copyright information: 139 / 140", "Files with license information: 140 / 140"). The row's first draft claimed "138/138" and could not have: the tool reports a ratio over total files, and the re-run at the audit sha returns 139/140
+|`LICENSES/` |`MPL-2.0.txt`, `CC-BY-SA-4.0.txt` |measured at 70422eb, command: `ls LICENSES/`
+|Docs licence |CC-BY-SA-4.0 (per-file headers) |measured at 70422eb, command: `grep -rh '^// SPDX[-]License-Identifier:' docs/ \| sort \| uniq -c` (=15 × CC-BY-SA-4.0). The `[-]` keeps this very cell from reading as an SPDX tag to `reuse lint` — quoting the pattern unescaped turned this row into "Invalid SPDX License Expressions: 1"
+|Severity |`LOW` — one document contradicts the licence of record |judgement, not a measurement
 |===
 
 *Finding (new).* `docs/PALIMPSEST.adoc` states "This project is licensed under
@@ -70,7 +78,7 @@ this matches the tree: `LICENSE` is MPL-2.0, every source header is MPL-2.0, and
 
 *Recommended next move:* an owner decision, not a cleanup. Either (a) the document
 is describing the licence the project *intends* to adopt, in which case `LICENSE`,
-`Cargo.toml` and 138 headers are wrong and must move together; or (b) the
+`Cargo.toml` and every per-file SPDX header are wrong and must move together; or (b) the
 document is a retained statement of the palimpsest *philosophy*, in which case it
 must stop asserting the licence in the present tense. Option (b) is a two-line
 edit; option (a) is a relicensing. This audit does not pick, because a licence is
@@ -87,17 +95,17 @@ that cannot carry an in-file header. The reason nobody had noticed is section 6.
 
 == 3. Documentation debt
 
-[cols=",",options="header",]
+[cols=",,,",options="header",]
 |===
-|Field |Value
-|`README.adoc` |202 lines (`wc -l`)
-|`docs/` |14 files, 2618 LoC (`git ls-files docs/` + `wc -l`)
-|`CHANGELOG.adoc` |present — the 2026-05-26 audit's "CHANGELOG.md: N" was a probe artefact; AsciiDoc is the estate format
-|Community health files |`.github/CONTRIBUTING.md`, `.github/SECURITY.md`, `.github/CODE_OF_CONDUCT.md`, `.github/CODEOWNERS`, `.github/FUNDING.yml`, `.github/PULL_REQUEST_TEMPLATE.md`
-|`CITATION.cff` |minted 2026-10-10 (`cff-version: 1.2.0`; `version`/`date-released` deliberately absent while nothing is tagged)
-|Markdown under `docs/` |0 — AsciiDoc-only holds
-|`.a2ml` state files |14 tracked; retired format estate-wide (rsr-template-repo#209), pending the repo deed
-|Severity |`MEDIUM`
+|Field |Value |Provenance
+|`README.adoc` |215 lines |measured at 70422eb, command: `wc -l < README.adoc` (first draft said 202; the re-run corrects it)
+|`docs/` |15 files, 2983 LoC |measured at 70422eb, commands: `git ls-files docs/ \| wc -l`; `git ls-files docs/ \| xargs wc -l \| tail -1` (first draft said 14 / 2618; the re-run corrects it — this audit file is itself one of the 15)
+|`CHANGELOG.adoc` |present — the 2026-05-26 audit's "CHANGELOG.md: N" was a probe artefact; AsciiDoc is the estate format |measured at 70422eb, command: `ls CHANGELOG.adoc`
+|Community health files |`.github/CONTRIBUTING.md`, `.github/SECURITY.md`, `.github/CODE_OF_CONDUCT.md`, `.github/CODEOWNERS`, `.github/FUNDING.yml`, `.github/PULL_REQUEST_TEMPLATE.md` |measured at 70422eb, command: `ls .github/CONTRIBUTING.md .github/SECURITY.md .github/CODE_OF_CONDUCT.md .github/CODEOWNERS .github/FUNDING.yml .github/PULL_REQUEST_TEMPLATE.md`
+|`CITATION.cff` |minted 2026-10-10 (`cff-version: 1.2.0`; `version`/`date-released` deliberately absent while nothing is tagged) |measured at 70422eb, command: `grep -n 'cff-version' CITATION.cff` (=line 1)
+|Markdown under `docs/` |0 — AsciiDoc-only holds |measured at 70422eb, command: `git ls-files docs/ \| grep -c '\.md$'` (=0; grep exits 1 on no match, the count is its output)
+|`.a2ml` state files |15 tracked; retired format estate-wide (rsr-template-repo#209), pending the repo deed |measured at 70422eb, command: `git ls-files '*.a2ml' \| wc -l` (first draft said 14; the re-run corrects it)
+|Severity |`MEDIUM` |judgement, not a measurement
 |===
 
 *Finding — one document missing, and it is the one the repo committed to.*
@@ -137,19 +145,22 @@ title, in one pass, saying *unimplemented* rather than *blocked*.
 
 == 4. Test debt (added; the 2026-05-26 scan did not measure this)
 
-[cols="1,1,1,1",options="header",]
+[cols="1,1,1,1,3",options="header",]
 |===
-|Crate |`.rs` files |LoC |`#[test]` fn
-|`oikos-syntax` |11 |794 |9
-|`oikos-parser` |5 |1529 |33
-|`oikos-desugar` |2 |111 |*0*
-|`oikos-check` |12 |1600 |29
+|Crate |`.rs` files |LoC |`#[test]` fn |Provenance
+|`oikos-syntax` |11 |794 |9 |measured at 70422eb, commands: `git ls-files oikos-syntax \| grep -c '\.rs$'`; `git ls-files oikos-syntax \| grep '\.rs$' \| xargs wc -l \| tail -1`; `git ls-files oikos-syntax \| grep '\.rs$' \| xargs grep -c '#\[test\]' \| awk -F: '{s+=$2} END {print s}'`
+|`oikos-parser` |5 |1529 |33 |measured at 70422eb, commands: `git ls-files oikos-parser \| grep -c '\.rs$'`; `git ls-files oikos-parser \| grep '\.rs$' \| xargs wc -l \| tail -1`; `git ls-files oikos-parser \| grep '\.rs$' \| xargs grep -c '#\[test\]' \| awk -F: '{s+=$2} END {print s}'`
+|`oikos-desugar` |2 |111 |*0* |measured at 70422eb, commands: `git ls-files oikos-desugar \| grep -c '\.rs$'`; `git ls-files oikos-desugar \| grep '\.rs$' \| xargs wc -l \| tail -1`; `git ls-files oikos-desugar \| grep '\.rs$' \| xargs grep -c '#\[test\]' \| awk -F: '{s+=$2} END {print s}'`
+|`oikos-check` |12 |1600 |29 |measured at 70422eb, commands: `git ls-files oikos-check \| grep -c '\.rs$'`; `git ls-files oikos-check \| grep '\.rs$' \| xargs wc -l \| tail -1`; `git ls-files oikos-check \| grep '\.rs$' \| xargs grep -c '#\[test\]' \| awk -F: '{s+=$2} END {print s}'`
 |===
 
-Source: `git ls-files <crate>` counted with `wc -l` and `grep -c '#\[test\]'`.
-71 test functions across the workspace; the count is occurrences in source, not a
-`cargo test` run — no cargo in the audit environment, so pass/fail status is
-taken from CI (CI green on `main` at the time of writing).
+71 test functions across the workspace — measured at 70422eb, command:
+`git ls-files | grep '\.rs$' | xargs grep -c '#\[test\]' | awk -F: '{s+=$2}
+END {print s}'`. The count is occurrences in source, not a `cargo test` run:
+no cargo in the audit environment, so `cargo test` could not run here and
+pass/fail status is UNVERIFIED in this document (CI state is observable only
+through the forge, and an audit that cites a green badge it cannot click is
+one step from citing a number it cannot re-run).
 
 *Finding.* `oikos-desugar` is 111 lines with zero tests and no `#[cfg(test)]`
 module, and it is the only crate on the "core guarantee" path (README: "A model
@@ -170,18 +181,24 @@ Ephapax IR for a single `transfer`, with the test asserting the linear consumpti
 rather than the shape of the IR — then a `criterion` bench in `oikos-parser` for
 the Godley-matrix parse.
 
+*Partial step, recorded so the row is not read as untouched:* the 2026-10-11
+enforcement pass pinned `oikos-desugar`'s error-contract diagnostics and its
+`EphapaxNotAvailable` refusal with `#[test]` functions (see CHANGELOG.adoc).
+That is the honest floor while the lowering is unimplemented — the end-to-end
+transfer test is #60's deliverable and is not faked here.
+
 == 5. Reproducibility / provisioning debt
 
-[cols=",",options="header",]
+[cols=",,,",options="header",]
 |===
-|Field |Value
-|Guix |`build/manifest.scm` — a `specifications->manifest` dev shell (moved from the root on 2026-10-10)
-|`build/guix.scm` (package expression) |absent
-|`reproducible-build` capability |declared *not* held, and `flake.nix` absent (canon: Nix is fallback-only)
-|`mise.toml` |present, and over-provisioned: node, python, go, zig, java, bun, deno, julia-era tooling for a repository whose only source language is Rust
-|`mise.lock` |absent — `mise lock` needs registry access; not fabricated
-|`launcher.sh` |absent — it is a shim over `build/just/provision-modes.sh`, which `provision-set` mints; the bundle is not here
-|Severity |`MEDIUM`
+|Field |Value |Provenance
+|Guix |`build/manifest.scm` — a `specifications->manifest` dev shell (moved from the root on 2026-10-10) |measured at 70422eb, command: `ls build/manifest.scm`
+|`build/guix.scm` (package expression) |absent |measured at 70422eb, command: `ls build/guix.scm` ("No such file or directory")
+|`reproducible-build` capability |declared *not* held, and `flake.nix` absent (canon: Nix is fallback-only) |measured at 70422eb, commands: `ls flake.nix` ("No such file or directory"); `bash /tmp/standards/scripts/check-rsr-profile.sh .` ("effective capabilities: docs-site governance-tier rust")
+|`mise.toml` |present, and over-provisioned: node, python, go, zig, java, bun, deno, julia-era tooling for a repository whose only source language is Rust |measured at 70422eb, command: `ls mise.toml`
+|`mise.lock` |absent — `mise lock` needs registry access; not fabricated |measured at 70422eb, command: `ls mise.lock` ("No such file or directory")
+|`launcher.sh` |absent — it is a shim over `build/just/provision-modes.sh`, which `provision-set` mints; the bundle is not here |measured at 70422eb, command: `ls launcher.sh` ("No such file or directory")
+|Severity |`MEDIUM` |judgement, not a measurement
 |===
 
 *Recommended next move:* cut `mise.toml` to this workspace (`rust`, `just`,
@@ -193,16 +210,16 @@ would make `reproducible-build` declarable, and the manifest alone does not.
 
 == 6. CI and supply-chain debt (added; this is where the repo's real incidents came from)
 
-[cols=",",options="header",]
+[cols=",,,",options="header",]
 |===
-|Field |Value
-|Workflows |19 in `.github/workflows/`
-|`actions.lock` |19 `workflows:` keys, 27 `dependencies:` records, transitively closed (verified 2026-10-10 with a clause-for-clause re-implementation of `scripts/check-lock-sync.sh`, because the script needs gawk and the audit environment had none)
-|Gates adopted |Lock Sync Gate (#114), Estate Rules: root shape + doc links + Mustfile (this commit)
-|Standards pin |`da2c748a…` (bumped from `6b38eb5` in #114)
-|`reuse lint` job |`ci/.gitlab-ci.yml:reuse` — *and this is the finding below*
-|`cargo-audit` |`.github/workflows/cargo-audit.yml` present
-|Severity |`LOW` on the lockfile, `MEDIUM` on enforcement coverage
+|Field |Value |Provenance
+|Workflows |19 in `.github/workflows/` |measured at 70422eb, command: `ls .github/workflows/*.yml \| wc -l`
+|`actions.lock` |19 `workflows:` keys, 27 `dependencies:` records, transitively closed |measured at 70422eb, commands: `awk "/^workflows:/{f=1;next} /^dependencies:/{f=0} f&&/^    '/{n++} END{print n}" .github/workflows/actions.lock` (=19); `awk "/^dependencies:/{f=1;next} f&&/^    '/{n++} END{print n}" .github/workflows/actions.lock` (=27). Closure itself: `bash scripts/check-lock-sync.sh` — NOT RUN (it needs gawk; without it the script exits FATAL rather than report a pass it did not compute, and the audit environment has none). Re-verified instead clause-for-clause against the script's four clauses (unlocked refs / stale entries / unlisted workflows / dangling edges): 0 violations, 19 keys, 27 records, 0 dangling edges, 0 unreferenced records. The 2026-10-10 first draft already recorded this substitution; the re-run repeats it at the audit sha
+|Gates adopted |Lock Sync Gate (#114), Estate Rules: root shape + doc links + Mustfile (this commit) |history of the audit's own commit, not a measurement
+|Standards pin |`da2c748aad55c1a1dcba00b60fe4a35017bc6540` (bumped from `6b38eb5` in #114) |measured at 70422eb, command: `grep -o 'hyperpolymath/standards@[a-f0-9]*' .github/workflows/actions.lock \| sort -u`
+|`reuse lint` job |`ci/.gitlab-ci.yml:reuse` — *and this is the finding below* |measured at 70422eb, command: `grep -n 'reuse' ci/.gitlab-ci.yml` (=lines 56–60)
+|`cargo-audit` |`.github/workflows/cargo-audit.yml` present |measured at 70422eb, command: `ls .github/workflows/cargo-audit.yml`
+|Severity |`LOW` on the lockfile, `MEDIUM` on enforcement coverage |judgement, not a measurement
 |===
 
 *Finding — a gate that could not run.* The only `reuse lint` invocation in this
@@ -301,4 +318,8 @@ workaround deliberately *not* taken:
 
 🤖 Regenerated 2026-10-10 in-repo (Arena agent session, issue #109 item 4) rather
 than by the estate scan, so that every row is reproducible from the tree it
-describes. Informational — closing the debt is owned by the maintainer.
+describes. Made self-verifying 2026-10-11 (same track): every measured row now
+carries `measured at 70422eb, command: <exact line>` and was re-run in a clean
+worktree of that sha before citation; the four rows whose first-draft numbers
+failed the re-run are corrected in place and say so. Informational — closing
+the debt is owned by the maintainer.

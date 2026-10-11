@@ -107,6 +107,15 @@ check-root-shape-self-test:
 check-lock-sync:
     ./scripts/check-lock-sync.sh
 
+# Lock parser + trust-boundary regression suite (tests/test_lock_sync.py):
+# proves check-lock-sync.sh's clauses and that the Lock Sync Gate never
+# executes PR-controlled code. Python is a recorded carve-out for exactly this
+# suite and the gate's data pump (see .machine_readable/rsr-profile.a2ml);
+# the ban on new Python files is untouched. Like `check-lock-sync`, the suite
+# calls scripts/check-lock-sync.sh and therefore needs gawk.
+test-lock-sync:
+    python3 -m unittest discover -s tests -v
+
 # Every relative link in the prose must resolve to a path that exists.
 check-doc-links:
     ./scripts/check-doc-links.sh .
@@ -122,7 +131,9 @@ mustfile:
     MUST_STRICT=1 ./scripts/run-mustfile.sh
 
 # All repo-level gates in one go — this is what CI enforces regardless.
-verify: check-root-shape check-root-shape-self-test check-doc-links check-doc-links-self-test check-lock-sync mustfile
+# test-lock-sync needs gawk (same as check-lock-sync); run the gawk-less subset
+# on a machine without it and say so rather than treating a skip as a pass.
+verify: check-root-shape check-root-shape-self-test check-doc-links check-doc-links-self-test check-lock-sync test-lock-sync mustfile
 
 # Wire this clone's git hooks to .github/hooks/ (pre-commit) and to .gitmessage.
 hooks-install:

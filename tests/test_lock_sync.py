@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MPL-2.0
+# SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+# hypatia:ignore cicd_rules/banned_language_file — dated Python carve-out
+#   (2026-10-11), not drift: this suite exists to prove the Lock Sync Gate can
+#   fail and that PR-controlled code never executes. The ban on NEW Python
+#   files stands (language-policy.yml is untouched). Decision of record:
+#   .machine_readable/rsr-profile.a2ml. Runner: `just test-lock-sync`.
 """Lock parser and trust-boundary regressions; run with python3 -m unittest discover -s tests."""
 
 import os
