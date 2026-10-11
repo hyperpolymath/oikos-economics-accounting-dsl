@@ -58,3 +58,46 @@ pub struct EphapaxIr; // placeholder
 pub fn desugar(_model: &Model) -> Result<EphapaxIr, DesugarError> {
     Err(DesugarError::EphapaxNotAvailable)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use oikos_syntax::{GodleyMatrix, Span};
+
+    /// The smallest legal `Model`: every list empty, the Godley matrix present
+    /// but empty (its absence would be a *parse* error upstream, not a
+    /// desugaring concern), spans collapsed to zero width.
+    fn bare_model() -> Model {
+        Model {
+            name: "fixture".into(),
+            active_period: "2026-Q1".into(),
+            periods: Vec::new(),
+            fx_rates: Vec::new(),
+            accounts: Vec::new(),
+            instruments: Vec::new(),
+            sectors: Vec::new(),
+            godley: GodleyMatrix {
+                cells: Vec::new(),
+                sectors: Vec::new(),
+                accounts: Vec::new(),
+                span: Span::new(0, 0),
+            },
+            body: Vec::new(),
+            span: Span::new(0, 0),
+        }
+    }
+
+    /// Until the Ephapax IR crates are wired in (#60), `desugar` must REFUSE
+    /// every model with `EphapaxNotAvailable` — the documented contract — rather
+    /// than synthesise a placeholder IR that would let a model "desugar" without
+    /// a backend and quietly lose the accounting identities on the way. This
+    /// pins the refusal itself; the end-to-end lowering test (a single
+    /// `transfer`, asserting linear consumption) is #60's deliverable and lands
+    /// with the lowering, not ahead of it.
+    #[test]
+    fn desugar_refuses_any_model_while_ephapax_is_unwired() {
+        let result = desugar(&bare_model());
+        assert!(matches!(result, Err(DesugarError::EphapaxNotAvailable)));
+    }
+}

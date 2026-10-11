@@ -5,7 +5,7 @@
 # Estate Rules — the repository-shape half of hyperpolymath/standards'
 # conventions, enforced where a change is made rather than at the next audit.
 #
-# Two rules, each with its instrument proved before its verdict is trusted:
+# Four rules, each with its instrument proved before its verdict is trusted:
 #
 #   1. Root shape. The repository root is allowlisted bidirectionally by
 #      .machine_readable/root-allow.txt and checked by scripts/check-root-shape.sh
@@ -21,10 +21,27 @@
 #      half-finished move, and `www/.well-known/security.txt` in this repo
 #      pointed at a different repository for months with every gate green.
 #
-# Each rule also runs its own self-test first. Both scripts can fail a build —
-# that is only worth trusting if they have been seen to fail on a planted fault,
-# which is the standard the Lock Sync Gate set in #114 and the template applies
-# to itself in .github/workflows/estate-rules.yml.
+#   3. Lock-sync regressions. tests/test_lock_sync.py plants faults (a replaced
+#      validator, a symlink data file, a stale merge ref) and asserts the Lock
+#      Sync Gate and scripts/check-lock-sync.sh catch each one. It exists
+#      because a gate that has never been seen failing is indistinguishable
+#      from a gate that is not wired up; it now has a runner (this step,
+#      `just test-lock-sync`, and `just verify`) instead of only a docstring.
+#
+#   4. REUSE licensing. `reuse lint` must report N/N on BOTH copyright and
+#      licence. THE RATIONALE, recorded because this gate is the fix for a
+#      measured failure: the repository's only `reuse lint` call lived in
+#      ci/.gitlab-ci.yml, which runs only after an out-of-band GitLab project
+#      setting (ci/README.adoc) — so REUSE drift read as conformance. That is
+#      how issue #109's stale SPDX line and nine stale REUSE.toml annotations
+#      licensed nothing for months while every gate stayed green. A gate that
+#      cannot run is not a gate; this one runs here, where the PRs are.
+#
+# The shape and link rules run their own self-test first; the lock-sync suite IS
+# its own instrument test. All of them can fail a build — that is only worth
+# trusting if they have been seen to fail on a planted fault, which is the
+# standard the Lock Sync Gate set in #114 and the template applies to itself in
+# .github/workflows/estate-rules.yml.
 #
 # This workflow deliberately carries NO `uses:` of its own: it checks out by
 # calling git in a `run:` step rather than using actions/checkout, so it has no
@@ -122,6 +139,21 @@ jobs:
             echo "gawk installed for this job: $(gawk --version | head -1)"
           fi
 
+      # tests/test_lock_sync.py is the instrument test for scripts/check-lock-sync.sh
+      # and for .github/workflows/lock-sync-gate.yml's trust boundary: it runs the
+      # gate's own run-block against fixture repos where the validator has been
+      # replaced, the merge ref is stale, or the data file is a symlink, and
+      # asserts each planted fault is caught. An obligation with no runner is
+      # documentation pretending to be a contract — this is the runner (also
+      # `just test-lock-sync` / `just verify`). It calls check-lock-sync.sh and
+      # therefore needs the gawk provided above; do not reorder these two steps.
+      - name: Lock-sync validator and gate regression suite
+        run: |
+          set -euo pipefail
+          test -f tests/test_lock_sync.py \
+            || { echo "::error::tests/test_lock_sync.py missing"; exit 1; }
+          python3 -m unittest discover -s tests -v
+
       # The repository's own contractile, executed. `.machine_readable/contractiles/
       # must/Mustfile.a2ml` used to say "Run with: must check" while no `must`
       # existed here and no step ran it — which is how six of its checks came to
@@ -153,3 +185,32 @@ jobs:
           echo "allowlist: ${required} required entr(y/ies), rest optional"
           test "${required:-0}" -ge 20 \
             || { echo "::error::root-allow.txt has fewer than 20 required entries — a shape gate that requires nothing is not a shape gate"; exit 1; }
+
+      # REUSE 3.x licensing completeness. Installed into a throwaway venv under
+      # RUNNER_TEMP rather than via an action: this workflow carries NO `uses:`
+      # by design (see the header), and the mandatory empty key
+      # '.github/workflows/estate-rules.yml': [] in actions.lock stays correct
+      # only while that holds. The [charset-normalizer] extra removes the tool's
+      # soft dependency on a system `file(1)` for encoding detection.
+      - name: Provide reuse (the fsfe SPDX/REUSE linter)
+        run: |
+          set -euo pipefail
+          if command -v reuse >/dev/null 2>&1; then
+            echo "reuse already present: $(reuse --version | head -1)"
+          else
+            python3 -m venv "${RUNNER_TEMP}/reuse-venv"
+            "${RUNNER_TEMP}/reuse-venv/bin/pip" install -q 'reuse[charset-normalizer]'
+            test -x "${RUNNER_TEMP}/reuse-venv/bin/reuse" \
+              || { echo "::error::reuse install produced no reuse"; exit 1; }
+            echo "reuse installed for this job: $("${RUNNER_TEMP}/reuse-venv/bin/reuse" --version | head -1)"
+          fi
+
+      # N/N on BOTH copyright and licence, or the job fails. This is the step
+      # whose absence let main ship a file with an SPDX licence line and no
+      # SPDX-FileCopyrightText (reuse lint at 70422eb: copyright 139/140) while
+      # the only gate that could have seen it was a dead GitLab pipeline.
+      - name: REUSE lint (licence AND copyright on every file)
+        run: |
+          set -euo pipefail
+          REUSE_BIN="$(command -v reuse || echo "${RUNNER_TEMP}/reuse-venv/bin/reuse")"
+          "${REUSE_BIN}" lint

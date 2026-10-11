@@ -161,4 +161,50 @@ omitted-rationale = "Oikos is a pre-1.0 language workspace: four Rust crates, a 
 #
 # Until then this profile is the declaration of record and the *shape* gate is
 # check-root-shape.sh, which reads root-allow.txt — the file this repo controls.
+
+# ---------------------------------------------------------------------------
+# PYTHON — an explicit decision, not drift (recorded 2026-10-11).
+# ---------------------------------------------------------------------------
+# Estate policy bans Python (language-policy.yml blocks NEW .py files; the
+# estate even ships a dedicated detector, standards/scripts/
+# check-inline-python.sh, because every *.py-extension check is blind to
+# heredocs). Yet this tree carries Python. Leaving that contradiction implicit
+# is how an exception turns into an exception that grew. Decided, in full:
+#
+#   THE BAN STANDS where it always stood: product code (the four crates) is
+#   Rust-only, and language-policy.yml is NOT weakened by this entry — a NEW
+#   .py file still fails CI. This record is not a licence to add Python.
+#
+#   THE CARVE-OUT is closed and dated. Exactly these pre-existing,
+#   base-authored, non-product uses remain, each with a runner so it cannot
+#   rot silently:
+#
+#     1. tests/test_lock_sync.py — the trust-boundary regression suite for
+#        .github/workflows/lock-sync-gate.yml. It exists to prove the gate can
+#        FAIL and that PR-controlled code is never executed. Converting it to
+#        the shell-fixture idiom (tests/shape/check_root_shape_test.sh) was the
+#        other option and is deliberately not taken in the same change that
+#        gives it its first runner: replacing a proven instrument with an
+#        unproven rewrite is how checkers get narrowed. Runner: `just
+#        test-lock-sync` (member of `just verify`) and a CI step in
+#        estate-rules.yml. Language-policy's NEW-file check still admits it,
+#        because it is not new.
+#
+#     2. The inline `python3` heredoc inside lock-sync-gate.yml, which
+#        materialises PR workflow blobs as inert DATA (git cat-file; mode/kind
+#        checks; symlinks refused) so the base-authored validator can read
+#        them without executing PR content. It is load-bearing for the trust
+#        boundary proven in docs/lock-sync-trust-boundary.adoc.
+#
+#     3. The runner invocations those two force: `python3 -m unittest
+#        discover -s tests` in Justfile and estate-rules.yml, and `python3 -m
+#        venv` in estate-rules.yml's REUSE provisioning (the `reuse` tool is
+#        itself a Python program; the venv keeps it out of the system Python).
+#
+#   NOTHING ELSE joins the carve-out without an owner ruling recorded here.
+#   Conversion of 1 and 2 to shell is tracked debt, and its unblock condition
+#   is that the replacements land with the same red-rehearsal standard the
+#   originals were accepted under (a self-test that cannot redden is fake).
+#   __pycache__/ is git-ignored so the carve-out cannot dirty the root shape.
+python-policy = "banned for product code and new files; tests/test_lock_sync.py, lock-sync-gate.yml's python3 data pump, and their runner invocations are a closed 2026-10-11 carve-out, each with a runner (see comment block)"
 #

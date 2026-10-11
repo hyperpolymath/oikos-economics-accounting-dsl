@@ -1,0 +1,210 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= Lock Sync Gate — trust-boundary note: what runs whose code
+Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+v1, 2026-10-11
+:toc:
+:icons: font
+
+`lock-sync-gate.yml` moved from `pull_request` to `pull_request_target`. This
+note is the written review of that move, kept in-tree because the property it
+establishes is load-bearing and invisible: under `pull_request_target` the
+workflow definition comes from the *base* branch, and the gate's job is to
+judge PR-authored workflow *data* without ever executing PR-authored *code*.
+The claim is that every command below sits on the right side of that line,
+that the token is read-only, and that no secret is reachable from the PR merge
+tree. Each claim names the command or test that pins it.
+
+The verdict is *reviewed and kept*, not merely tolerated. The narrower
+alternative — running on `pull_request` with a merge-ref checkout — was
+considered and is rejected below (section 7), because it puts the validator
+itself under PR control, which is the failure this gate exists to prevent.
+
+[WARNING]
+====
+*Operability finding (section 9), discovered by this review:* the
+repository's Actions policy currently **blocks the `pull_request_target`
+event**, so the gate cannot start on pull requests at all — every PR
+produces `startup_failure` ("Event 'pull_request_target' is not allowed to
+trigger Actions workflows"). The design below is sound and the trigger is
+the right one; a gate that cannot run is not a gate, so the owner-side
+unblock in section 9 is part of this review, not a footnote.
+====
+
+== 1. Event model: whose workflow definition runs
+
+On `pull_request_target`, GitHub executes the workflow *file from the base
+branch* against the PR's merge proposal. That single fact decides most of the
+table in section 3: every `run:` block, every inline script, every shell
+variable assignment is base-authored, regardless of what the PR edits. On
+`pull_request` the same YAML would be read from the merge ref — PR-authored.
+
+`github.sha` under `pull_request_target` is the *base* commit. The gate does
+not check anything out into the workspace; it fetches objects into a bare
+repository under `mktemp -d` and reads blobs. There is no point at which the
+merge tree becomes the working directory.
+
+== 2. Command-by-command provenance
+
+Everything in the single `Validate proposed workflow data with the trusted
+validator` step, in execution order:
+
+[cols="3,1,4",options="header"]
+|===
+|Command (abridged at the ellipsis) |Code provenance |What it can execute
+
+| `git init -q --bare "$WORK/repo"` + `git remote add origin https://github.com/${REPO}.git` | base (run block) | nothing from the PR
+| `git ... fetch ... origin "$SHA"` where `SHA=${{ github.sha }}` | base | fetches the BASE commit's objects
+| `git show "${SHA}:scripts/check-lock-sync.sh" > "$WORK/validator.sh"` | base | extracts the validator from the BASE tree — even a PR that deletes or rewrites `scripts/check-lock-sync.sh` cannot change which validator runs
+| `git ... fetch ... origin "refs/pull/${PR_NUMBER}/merge"` | base | fetches the PR merge commit *as objects*; nothing is checked out
+| the `[ "$(git rev-parse ...^1)" != ... ]` / `^2` comparison | base | refuses a stale or mismatched merge ref (`test_stale_merge_is_rejected`, `test_missing_merge_is_rejected`)
+| the inline `python3` heredoc (`git ls-tree` → `git cat-file blob` → `write_bytes`) | base (inline in the run block) | writes ONLY `.github/workflows/` blobs that are regular files (`100644`/`100755`, kind `blob`, single-line names); symlinks and submodules are rejected with "must be regular files" before any byte is written; the code it runs is the base branch's own heredoc
+| `bash "$WORK/validator.sh" "$WF_DIR"` | base script, PR data | the base-authored awk parser reads the materialised YAML/lock *as data* — it never sources, imports, or invokes anything named in it
+|===
+
+The only PR-authored artefacts in the whole step are inert files under
+`$WORK/workflows/`, consumed as parser input. The PR's `scripts/`, `tests/`,
+`hooks/`, and workflow `run:` bodies are never read at all.
+
+== 3. The token
+
+----
+$ grep -n -A2 '^permissions:' .github/workflows/lock-sync-gate.yml
+29:permissions:
+30-  contents: read
+----
+
+`contents: read` is the whole grant. `${{ github.token }}` appears exactly
+once, as `TOKEN`, and is used only to build the `AUTHORIZATION: basic` header
+that `git -c http.extraheader=` passes to *two fetch commands*. The credential
+is never written into `.git/config` (header form, not a token-in-URL remote),
+never echoed, and the bare repository plus `$WORK` are removed on `EXIT`.
+Read-only contents on a repository whose PRs are public is the same access an
+anyone-on-the-internet already has; the token is not an escalation path even
+in total compromise of the fetch step.
+
+== 4. Secret reachability
+
+----
+$ grep -n 'secrets\.' .github/workflows/lock-sync-gate.yml
+(no output; exit 1)
+$ grep -n 'uses:' .github/workflows/lock-sync-gate.yml | grep -v ': *#'
+(no output; exit 1 — the workflow has no `uses:` on non-comment lines)
+----
+
+No `secrets.*` context is referenced anywhere in the file, so the
+`pull_request_target` ability to expose secrets to a workflow is unused: there
+is no step that receives a secret for PR-controlled data to reach. The absence
+of `uses:` also removes the third-party action channel — there is no external
+binary that could read the environment on the PR's behalf. A PR merge tree is
+therefore *structurally* unable to see a secret in this workflow: secrets are
+not merely "not currently leaked", there is nothing to leak.
+
+== 5. What pins the proof
+
+Written proof degrades to opinion unless something fails when the property
+fails. `tests/test_lock_sync.py` (runner: `just test-lock-sync`, and the
+Estate Rules workflow on every PR) builds fixture repositories and rehearses
+the gate's own run block against them:
+
+[cols="2,3",options="header"]
+|===
+|Test |Property it pins
+
+| `test_valid_merge_ignores_replaced_validator` | the PR replaced `scripts/check-lock-sync.sh`; the base validator's verdict still holds — PR code never runs
+| `test_deleted_pr_validator_is_ignored` | deleting the validator in the PR cannot disable the gate
+| `test_merge_data_is_validated_even_when_head_is_clean` | PR merge DATA is validated by base rules even when the PR branch itself is clean
+| `test_symlink_data_is_rejected` | a symlink smuggled into `.github/workflows/` is refused before materialisation ("must be regular files")
+| `test_stale_merge_is_rejected` | a merge ref that does not match this event's base+head fails closed
+| `test_missing_merge_is_rejected` | a missing merge ref fails closed — no fallback to head
+| `test_push_and_dispatch_use_event_sha` | push/dispatch paths validate the event SHA itself
+| `test_trusted_workflow_configuration` | the workflow stays `pull_request_target`-only, keeps its concurrency key, and carries no non-comment `uses:`
+|===
+
+Each of these plants a fault and asserts the failure — the suite reddens, and
+has been observed reddening on the planted faults it creates.
+
+== 6. What would break the proof
+
+Future edits that invalidate sections 2–4, named so they cannot land as
+drive-bys:
+
+* any `uses:` added to this file (hands the environment to third-party code;
+  also breaks the mandatory empty key in `.github/workflows/actions.lock`);
+* any `pull_request:` trigger added beside `pull_request_target:` (the
+  workflow file would then also run in its merge-ref form, PR-authored);
+* `actions/checkout` with `ref:` set to the PR head, or any checkout of
+  `refs/pull/*/merge` into the workspace (PR tree becomes executable state);
+* `bash`/`source`/`eval` on anything under `$WORK/workflows/`;
+* any `secrets.*` added to `env:` of a step that touches PR-derived data;
+* any widening of `permissions:` beyond `contents: read`.
+
+== 7. The narrower alternative, and why it was not taken
+
+The natural "safer-looking" shape is `pull_request` + `actions/checkout` of the
+merge ref + `bash scripts/check-lock-sync.sh`. It fails the requirement in one
+move: the *validator* would then be checked out from the merge ref, i.e.
+PR-authored. A PR could rewrite `check-lock-sync.sh` to `exit 0` and the gate
+would approve its own desync — the exact class of self-approval the suite's
+first two tests exist to forbid. The current shape buys its trust by keeping
+the workflow and the validator in the base branch and treating the PR strictly
+as data; the price (a `pull_request_target` badge that deserves suspicion) is
+what this note is for.
+
+== 8. What this note does not prove
+
+The base branch is trusted here by definition — a malicious *base* commit owns
+this workflow outright, as it would any CI. Runner-image integrity and
+GitHub's event delivery are assumed, not verified. Those bounds are shared by
+every workflow in this repository; they are named so the review is complete,
+not to dilute the claims above.
+
+== 9. Review finding: the gate cannot currently start on pull requests
+
+Re-running the gate's first PR-event attempt (this PR, 2026-10-11) surfaced
+what no amount of reading the YAML could: `pull_request_target` is *blocked by
+repository policy* in this repository. The run never reaches a job:
+
+----
+run 38118289374 (opened), 38118886485 (reopened) — both:
+status: completed, conclusion: startup_failure, jobs: 0
+annotation: Event 'pull_request_target' is not allowed to trigger Actions
+workflows. Workflow file: '.github/workflows/lock-sync-gate.yml'.
+----
+
+Reproduced deterministically (close + reopen the PR, no tree change). The same
+file starts on `push` to `main`, so the YAML is fine — the *event* is refused.
+The gate moved to `pull_request_target` in #116 and has therefore never run
+against a pull request: main's pushes are green while every PR gets a
+startup-failure run record and no check. In the shape of the #109 lesson: a
+gate that cannot run is not a gate, and the absence of red read as absence of
+drift.
+
+*Unblock (owner-side, out-of-band — the same class as the GitLab project
+setting in ci/README.adoc):* allow the `pull_request_target` event for this
+repository (Repository → Settings → Actions → General, or the owning
+organization's Actions permissions — the settings API is admin-only, so this
+note cannot read which layer holds the switch). Sections 1–5 above are the
+written justification for why that event is safe *in this workflow*: base-
+owned code only, PR content as data, `contents: read`, no secrets.
+
+*If the ban on the event stands*, the narrower running alternative is a
+`pull_request`-triggered mirror that fetches the validator from
+`github.event.pull_request.base.sha` (not `github.sha`, which on `pull_request`
+is the merge commit) and validates the merge tree's `.github/workflows/` as
+data. It is weaker in exactly one named way: under `pull_request` the workflow
+*file* runs from the merge tree, so a PR can disable or rewrite the gate that
+judges it — the self-approval property `test_trusted_workflow_configuration`
+exists to forbid. That alternative is proposed, not taken; taking it means
+accepting that residual risk in writing.
+
+`workflow_dispatch` remains available on the strong gate for manual runs.
+
+''''''
+
+🤖 Written 2026-10-11 (Arena agent session) as the review of the
+`pull_request_target` move in `.github/workflows/lock-sync-gate.yml`. The
+measurements in sections 3–4 were run in a clean worktree of `70422eb` (the
+workflow this note reviews, before the header-comment pointer added alongside
+this note) with the exact commands shown; the properties they measure are
+pinned continuously by the tests in section 5.

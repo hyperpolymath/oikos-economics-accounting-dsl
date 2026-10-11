@@ -18,6 +18,73 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 === [Unreleased]
 
+==== Added
+
+* Enforcement gaps left open by the #109 audit's fix (2026-10-11 pass):
+`reuse lint` now runs as a *GitHub* gate in `.github/workflows/estate-rules.yml`
+(step `REUSE lint (licence AND copyright on every file)`), provisioned from PyPI
+into a throwaway venv so the workflow stays `uses:`-free and its mandatory empty
+key in `actions.lock` stays correct. The rationale is measured, not stylistic:
+the repository's only `reuse lint` call lived in `ci/.gitlab-ci.yml`, which runs
+only after an out-of-band GitLab project setting — so REUSE drift read as
+conformance. That is how issue #109's stale SPDX line and the nine stale
+`REUSE.toml` annotations survived months of green.
+* `tests/test_lock_sync.py` has a runner at last: `just test-lock-sync` (member
+of `just verify`) and an Estate Rules step (`python3 -m unittest discover -s
+tests -v`, ordered after the `Provide gawk` step that its `check-lock-sync.sh`
+calls need). The suite plants faults — a replaced validator, a symlink data
+file, a stale or missing merge ref — and asserts the gate catches each.
+* `docs/lock-sync-trust-boundary.adoc`: the written review of
+`lock-sync-gate.yml`'s move to `pull_request_target`, kept in-tree because the
+property is invisible: command-by-command provenance (base-authored code vs
+PR-authored data), the `contents:read` token path, zero `secrets.*`
+reachability, the tests that pin each claim, and the edits that would break the
+proof. Verdict: reviewed and kept; the narrower `pull_request` + checkout
+alternative lets the PR author replace the validator and self-approve, and is
+rejected there.
+* `oikos-desugar` tests (product debt under #60, partial): the error-contract
+diagnostics and the documented `EphapaxNotAvailable` refusal are now pinned by
+`#[test]` functions. The end-to-end lowering test remains #60's deliverable and
+is not faked.
+
+==== Fixed
+
+* `tests/test_lock_sync.py` carried an `SPDX-License-Identifier` line but no
+`SPDX-FileCopyrightText` — `reuse lint` at `70422eb` reported copyright
+139/140, licence 140/140, with this file the single miss. Header added;
+`reuse lint` on the resulting tree is N/N on both.
+* `docs/tech-debt-2026-10-10.adoc` is now self-verifying: every measured row
+reads `measured at 70422eb, command: <exact line>`, each re-run in a clean
+worktree of that sha before citation. Four rows failed the re-run and are
+corrected in place (README 202→215 lines; `docs/` 14→15 files and 2618→2983
+LoC; tracked `.a2ml` 14→15; REUSE "138/138" → the true 139/140 copyright).
+That is the same trap that made the 2026-05-26 scan stale, closed by rule.
+
+==== Notes
+
+* The Python question is decided explicitly and recorded in
+`.machine_readable/rsr-profile.a2ml` (`python-policy` key + comment block): the
+estate ban stands for product code and new files — `language-policy.yml` is not
+weakened — while `tests/test_lock_sync.py`, `lock-sync-gate.yml`'s `python3`
+data pump, and the runner invocations they force form a closed, dated
+carve-out, each with a runner. `__pycache__/` is git-ignored either way.
+* `actions.lock` is unchanged by this pass: `estate-rules.yml` gains no
+`uses:`, so its `'.github/workflows/estate-rules.yml': []` empty key remains
+exactly what the workflow-linter and `scripts/check-lock-sync.sh` clause 4
+require.
+* Two review findings, recorded rather than papered over. (a) The Lock Sync
+Gate's `pull_request_target` trigger is currently **refused by repository
+Actions policy** ("Event 'pull_request_target' is not allowed to trigger
+Actions workflows"), so the gate is `startup_failure` on every PR — it has
+never run against one. The design is sound (`docs/lock-sync-trust-boundary.adoc`
+§1–5) and the unblock is owner-side: allow the event (§9 names the settings
+path and the weaker running alternative if the ban stands). (b) `main` has
+been red on `governance / Language / package anti-pattern policy` since #116
+landed `tests/test_lock_sync.py` without an exemption — the Python carve-out
+now declares itself where the checker looks (inline `hypatia:ignore
+cicd_rules/banned_language_file` pragma, the mechanism `.hypatia-ignore`
+names as preferred), rather than leaving the decision in prose and CI red.
+
 ==== Changed
 
 * chore(repo): align the repository root to the `rsr-template-repo` allowlist and

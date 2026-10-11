@@ -44,3 +44,8 @@ dist/
 # at the repository ROOT (the generator, pre-commit and Claude Code all read
 # it from there), not inside this directory.
 /.claude/
+
+# Python bytecode caches. tests/test_lock_sync.py is a recorded, dated Python
+# carve-out (see .machine_readable/rsr-profile.a2ml): running it must never
+# leave __pycache__/ to read as root-shape drift or enter the tree.
+__pycache__/

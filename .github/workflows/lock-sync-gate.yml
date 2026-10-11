@@ -16,6 +16,16 @@ name: Lock Sync Gate
 # lockfile entry to go stale and is structurally immune to the very failure it
 # detects. Do not add a `uses:` to this file.
 #
+# The `pull_request_target` trust boundary — which commands run base-authored
+# code, which consume PR-authored data, why the token stays contents:read, and
+# why no secret is reachable from the PR merge tree — is proved in
+# docs/lock-sync-trust-boundary.adoc and pinned test-by-test by
+# tests/test_lock_sync.py. Read that note before changing the trigger or
+# anything in the run block below. NOTE that note's section 9: as of
+# 2026-10-11 the repository's Actions policy REFUSES the pull_request_target
+# event, so this gate is startup_failure on every PR until the owner allows
+# the event — a gate that cannot run is not a gate.
+#
 # There is also no `paths:` filter, on purpose: a filtered workflow never
 # reports on pull requests that miss the filter, which deadlocks any branch
 # ruleset that requires this check.
