@@ -28,12 +28,14 @@ macroeconomic models in the tradition of Godley & Lavoie (2007).
 It desugars into https://github.com/hyperpolymath/ephapax[Ephapax], inheriting
 its linear types, Tofte–Talpin regions, and typestate.
 
-The core guarantee:
+The core invariant:
 
 [quote]
 ____
 A model that violates any accounting identity *does not compile*.
 ____
+
+_Status: enforced by the Rust pre-desugar checks; kernel-checked statement intended (Godley invariant as fibre coverage)._
 
 toc::[]
 
