@@ -107,14 +107,14 @@ check-root-shape-self-test:
 check-lock-sync:
     ./scripts/check-lock-sync.sh
 
-# Lock parser + trust-boundary regression suite (tests/test_lock_sync.py):
+# Lock parser + trust-boundary regression suite (tests/test_lock_sync.sh):
 # proves check-lock-sync.sh's clauses and that the Lock Sync Gate never
-# executes PR-controlled code. Python is a recorded carve-out for exactly this
-# suite and the gate's data pump (see .machine_readable/rsr-profile.a2ml);
+# executes PR-controlled code. It is Bash. The gate's own inline python3 data
+# pump is a separate recorded carve-out (see .machine_readable/rsr-profile.a2ml);
 # the ban on new Python files is untouched. Like `check-lock-sync`, the suite
 # calls scripts/check-lock-sync.sh and therefore needs gawk.
 test-lock-sync:
-    python3 -m unittest discover -s tests -v
+    bash tests/test_lock_sync.sh
 
 # Every relative link in the prose must resolve to a path that exists.
 check-doc-links:
