@@ -1,0 +1,7 @@
+{
+  "name": "oikos-economics-accounting-dsl",
+  "private": true,
+  "devDependencies": {
+    "prettier": "3.10.1"
+  }
+}
