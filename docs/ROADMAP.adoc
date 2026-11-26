@@ -140,10 +140,10 @@ for `MoneyExpr` rather than writing a separate Oikos proof.
 
 == Estate cleanup — banned-language removal (Python)
 
-*Status:* in-progress. Last updated 2026-11-26.
+*Status:* in-progress. Last updated 2026-11-26. Five PRs are ready for review; one is merged.
 
 Python is banned estate-wide.
-Each repo gets one draft PR that replaces its Python file with Bash,
+Each repo gets one PR (opened as a draft) that replaces its Python file with Bash,
 Rust or Julia, updates the callers and docs, and deletes dead files.
 Nothing here is merged until the owner merges it.
 
@@ -153,31 +153,31 @@ Nothing here is merged until the owner merges it.
 
 | odds-and-sods-package-manager
 | https://github.com/hyperpolymath/odds-and-sods-package-manager/pull/149[#149]
-| draft
+| ready for review
 | `mise_to_a2ml.py` deleted. It was dead.
 
 | oikos-economics-accounting-dsl
 | https://github.com/hyperpolymath/oikos-economics-accounting-dsl/pull/122[#122]
-| draft
+| ready for review
 | `test_lock_sync.py` replaced by `test_lock_sync.sh`. CI reds are also on `main`.
 
 | proven-tests-and-benches
 | https://github.com/hyperpolymath/proven-tests-and-benches/pull/119[#119]
-| draft
+| ready for review
 | Contract checker and report emitter ported to Rust. Review threads resolved. REUSE and Sonar reds are not from this PR.
 
 | smtp-notify-action
 | https://github.com/hyperpolymath/smtp-notify-action/pull/30[#30]
-| draft
+| ready for review
 | `nntp-sink.py` replaced by a Rust fixture built by `nntp-sink.sh`.
 
 | wsl-compute-governor-dispatcher
 | https://github.com/hyperpolymath/wsl-compute-governor-dispatcher/pull/27[#27]
-| merged by the owner
+| merged
 | GPU smoketest is now Bash. The ONNX matmul step was dropped.
 
 | excel-economic-numbers-tool
 | https://github.com/hyperpolymath/excel-economic-numbers-tool/pull/93[#93]
-| draft
+| ready for review
 | `pyproject.toml` removed, and the Python steps in `integration-tests.yml`. Julia precompile failures are not from this PR. `actions.lock` and `mise.toml` still list Python.
 |===
