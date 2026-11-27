@@ -21,7 +21,7 @@
 #      half-finished move, and `www/.well-known/security.txt` in this repo
 #      pointed at a different repository for months with every gate green.
 #
-#   3. Lock-sync regressions. tests/test_lock_sync.py plants faults (a replaced
+#   3. Lock-sync regressions. tests/test_lock_sync.sh plants faults (a replaced
 #      validator, a symlink data file, a stale merge ref) and asserts the Lock
 #      Sync Gate and scripts/check-lock-sync.sh catch each one. It exists
 #      because a gate that has never been seen failing is indistinguishable
@@ -139,7 +139,7 @@ jobs:
             echo "gawk installed for this job: $(gawk --version | head -1)"
           fi
 
-      # tests/test_lock_sync.py is the instrument test for scripts/check-lock-sync.sh
+      # tests/test_lock_sync.sh is the instrument test for scripts/check-lock-sync.sh
       # and for .github/workflows/lock-sync-gate.yml's trust boundary: it runs the
       # gate's own run-block against fixture repos where the validator has been
       # replaced, the merge ref is stale, or the data file is a symlink, and
@@ -150,9 +150,9 @@ jobs:
       - name: Lock-sync validator and gate regression suite
         run: |
           set -euo pipefail
-          test -f tests/test_lock_sync.py \
-            || { echo "::error::tests/test_lock_sync.py missing"; exit 1; }
-          python3 -m unittest discover -s tests -v
+          test -f tests/test_lock_sync.sh \
+            || { echo "::error::tests/test_lock_sync.sh missing"; exit 1; }
+          bash tests/test_lock_sync.sh
 
       # The repository's own contractile, executed. `.machine_readable/contractiles/
       # must/Mustfile.a2ml` used to say "Run with: must check" while no `must`

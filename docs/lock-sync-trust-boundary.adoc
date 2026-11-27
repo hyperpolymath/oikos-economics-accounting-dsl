@@ -103,7 +103,7 @@ not merely "not currently leaked", there is nothing to leak.
 == 5. What pins the proof
 
 Written proof degrades to opinion unless something fails when the property
-fails. `tests/test_lock_sync.py` (runner: `just test-lock-sync`, and the
+fails. `tests/test_lock_sync.sh` (runner: `just test-lock-sync`, and the
 Estate Rules workflow on every PR) builds fixture repositories and rehearses
 the gate's own run block against them:
 
